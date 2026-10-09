@@ -1,0 +1,21 @@
+name: cofre_app
+description: Cofre de Entregáveis — marco 1.
+publish_to: none
+version: 0.1.0+1
+environment:
+  sdk: ">=3.13.0 <4.0.0"
+  flutter: ">=3.47.6"
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_riverpod: 3.4.3
+  go_router: 18.0.2
+  http: 1.6.0
+  cupertino_icons: 2.0.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+flutter:
+  uses-material-design: true

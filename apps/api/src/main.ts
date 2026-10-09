@@ -1,0 +1,10 @@
+import { config } from 'dotenv';
+import { fileURLToPath } from 'node:url';
+config({ path: fileURLToPath(new URL('../../../../.env', import.meta.url)), quiet: true });
+const { createApp } = await import('./app.js');
+const { settings } = await import('./config.js');
+const conf = settings();
+const server = await createApp(conf);
+await server.app.listen(conf.port, '127.0.0.1');
+console.log('API disponível em http://localhost:' + conf.port + '/api/v1');
+for (const signal of ['SIGINT', 'SIGTERM'] as const) process.once(signal, () => { void server.close(); });

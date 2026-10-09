@@ -1,0 +1,31 @@
+{
+  "name": "cofre-entregaveis",
+  "private": true,
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=24.19.0 <25"
+  },
+  "scripts": {
+    "dev:api": "pnpm build && pnpm --filter @cofre/api start",
+    "db:generate": "pnpm --filter @cofre/database generate",
+    "db:migrate": "pnpm --filter @cofre/database migrate",
+    "db:validate": "pnpm --filter @cofre/database validate",
+    "build": "pnpm --filter @cofre/database build && pnpm --filter @cofre/api build",
+    "typecheck": "pnpm --filter @cofre/database build && pnpm --filter @cofre/api typecheck",
+    "lint": "eslint apps/api packages/database scripts",
+    "test": "pnpm build && pnpm --filter @cofre/api test",
+    "test:integration": "node scripts/integration.mjs",
+    "contracts:generate": "pnpm build && node apps/api/dist/src/export-openapi.js && node scripts/generate-dart.mjs",
+    "contracts:check": "pnpm build && node apps/api/dist/src/export-openapi.js --check && node scripts/generate-dart.mjs --check",
+    "db:start": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/postgres-local.ps1 start",
+    "db:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/postgres-local.ps1 stop",
+    "db:status": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/postgres-local.ps1 status",
+    "test:integration:local": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/postgres-local.ps1 test"
+  },
+  "devDependencies": {
+    "eslint": "10.12.0",
+    "typescript-eslint": "8.71.1",
+    "typescript": "5.9.3",
+    "@types/node": "24.10.1"
+  }
+}
