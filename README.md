@@ -31,6 +31,13 @@ O padrão é [PostgreSQL nativo no Windows](docs/windows-sem-docker.md), iniciad
 
 ## Preparação
 
+Repositório privado: [Louizricard/cofre-entregaveis](https://github.com/Louizricard/cofre-entregaveis). Para uma instalação nova, autentique seu GitHub e clone:
+
+```sh
+git clone https://github.com/Louizricard/cofre-entregaveis.git
+cd cofre-entregaveis
+```
+
 Na raiz do projeto:
 
 ```sh

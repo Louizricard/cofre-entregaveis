@@ -46,7 +46,7 @@ Não há suíte automatizada end-to-end em navegador. A conferência manual foi 
 
 Autorizados pelo responsável em 09/10/2026: iniciar Git local, criar repositório privado na conta louizricard e enviar esta fundação. Preparação local inclui .gitignore, .gitattributes, .editorconfig, guia de contribuição e templates GitHub.
 
-O PRD original foi atualizado para v1.2 e organizado em [docs/prd.md](prd.md). Senhas, dados PostgreSQL, SDKs, builds, uploads e dumps ficam fora do Git. A publicação depende de autenticação válida do GitHub CLI; seu estado remoto deve ser confirmado ao final da operação.
+O PRD original foi atualizado para v1.2 e organizado em [docs/prd.md](prd.md). Senhas, dados PostgreSQL, SDKs, builds, uploads e dumps ficam fora do Git. Repositório criado como privado: [Louizricard/cofre-entregaveis](https://github.com/Louizricard/cofre-entregaveis), branch principal main. Primeiro commit local: 13cd87d. A publicação do código usa o remoto origin com autenticação GitHub CLI da conta confirmada.
 
 Não há deploy ou publicação do aplicativo. Recursos de upload, processamento, portal cliente, pagamentos e assinatura não foram implementados.
 
