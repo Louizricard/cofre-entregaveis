@@ -1,6 +1,6 @@
-# Cofre de Entregáveis — marco 1
+# Cofre de Entregáveis — marco 2A
 
-Monorepo com Flutter Web, NestJS/TypeScript e PostgreSQL/Prisma. Cadastro cria conta, workspace pessoal, membership OWNER e sessão na mesma transação. Login restaura a sessão por cookie; o dashboard protegido exibe o workspace e a lista vazia real. Marco 1 validado com testes automatizados e conferência manual do responsável.
+Monorepo com Flutter Web, NestJS/TypeScript e PostgreSQL/Prisma. Cadastro cria conta, workspace pessoal, membership OWNER e sessão na mesma transação. Login restaura a sessão por cookie; o dashboard protegido permite cadastrar e editar clientes e projetos, buscar, paginar e arquivar projetos. Marco 1 preservado; o recorte atual está em [Marco 2A](docs/marco-2a.md).
 
 [PRD](docs/prd.md) · [Progresso](docs/progress.md) · [Ambiente Windows](docs/windows-sem-docker.md) · [Contribuição](CONTRIBUTING.md)
 
@@ -97,7 +97,7 @@ flutter pub get --enforce-lockfile
 flutter run -d chrome --web-hostname localhost --web-port 8080 --dart-define=API_ORIGIN=http://localhost:3000
 ```
 
-Use **localhost** em ambos os serviços, sem misturar 127.0.0.1. A API permite CORS somente para `APP_ORIGIN`, com credentials explícitas no BrowserClient. A interface é pt-BR e contém cadastro, login, splash com recuperação de erro e dashboard vazio. Ao recarregar, chama `/auth/me`; 401 volta ao login.
+Use **localhost** em ambos os serviços, sem misturar 127.0.0.1. A API permite CORS somente para `APP_ORIGIN`, com credentials explícitas no BrowserClient. A interface é pt-BR e contém cadastro, login, splash com recuperação de erro e dashboard de clientes e projetos. Ao recarregar, chama `/auth/me`; 401 volta ao login.
 
 ## Segurança e decisões
 
@@ -197,3 +197,18 @@ infra/             documentação da infraestrutura nativa
 scripts/           geração Dart e runner de integração
 docs/              decisões, fontes e estado dos checks
 ```
+
+## Atualizar uma instalação existente para o marco 2A
+
+Preserve a sua .env e os dados locais. Pare apenas a API deste projeto, depois execute na raiz:
+
+```powershell
+pnpm.cmd db:start
+pnpm.cmd db:generate
+pnpm.cmd db:migrate
+pnpm.cmd dev:api
+```
+
+Reinicie o Flutter Web em outro terminal usando o comando anterior e atualize a página. A migration acrescenta Client e Project; a conta, workspace e sessões existentes permanecem.
+
+Se a porta 3000 estiver ocupada por outro programa, não o encerre sem identificá-lo. No terminal da API use `$env:PORT='3001'` antes de `pnpm.cmd dev:api`; no Flutter use `--dart-define=API_ORIGIN=http://localhost:3001`. Mantenha APP_ORIGIN em http://localhost:8080. No Linux, o equivalente é `PORT=3001 pnpm dev:api`. Essa troca de porta é local e não modifica os contratos.

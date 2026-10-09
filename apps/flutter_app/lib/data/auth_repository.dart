@@ -23,7 +23,7 @@ class HttpAuthRepository implements AuthRepository {
   final Uri base;
   String? _csrf;
   void Function()? onUnauthorized;
-  late final CofreClient _api = CofreClient(_request);
+  late final CofreClient api = CofreClient(_request);
   HttpAuthRepository(this.httpClient, this.base);
 
   Future<dynamic> _request(
@@ -33,7 +33,7 @@ class HttpAuthRepository implements AuthRepository {
   ) async {
     try {
       if (method != 'GET' && _csrf == null) {
-        _csrf = (await _api.authcsrf()).csrfToken;
+        _csrf = (await api.authcsrf()).csrfToken;
       }
       final request = http.Request(method, base.resolve(path));
       request.headers['Accept'] = 'application/json';
@@ -68,16 +68,16 @@ class HttpAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<IdentityView> me() => _api.authme();
+  Future<IdentityView> me() => api.authme();
   @override
-  Future<IdentityView> login(LoginDto input) => _api.authlogin(input);
+  Future<IdentityView> login(LoginDto input) => api.authlogin(input);
   @override
-  Future<IdentityView> register(RegisterDto input) => _api.authregister(input);
+  Future<IdentityView> register(RegisterDto input) => api.authregister(input);
   @override
-  Future<ProjectsView> projects() => _api.projectslist();
+  Future<ProjectsView> projects() => api.projectslist();
   @override
   Future<void> logout() async {
-    await _api.authlogout();
+    await api.authlogout();
     _csrf = null;
   }
 }

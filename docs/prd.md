@@ -1,6 +1,6 @@
 # Cofre de Entregáveis — PRD técnico e primeiro marco
 
-Versão 1.2 · 9 de outubro de 2026 · Marco 1 concluído e validado
+Versão 1.3 · 9 de outubro de 2026 · Marco 1 concluído; marco 2A implementado
 
 ## 1. Objetivo e decisões
 
@@ -10,7 +10,7 @@ Flutter Web será a primeira interface entregue. A arquitetura deve admitir apli
 
 O monorepo usa pnpm para os pacotes TypeScript e ferramentas Flutter para Dart. OpenAPI é o contrato compartilhado; tipos TypeScript não são importáveis diretamente pelo aplicativo Flutter.
 
-O primeiro marco implementa somente cadastro, login, sessão, workspace e dashboard vazio. Está concluído neste PC, com testes automatizados e conferência manual confirmada pelo responsável em 09/10/2026. O restante deste documento orienta os próximos marcos.
+O primeiro marco implementa somente cadastro, login, sessão, workspace e dashboard vazio. Está concluído neste PC, com testes automatizados e conferência manual confirmada pelo responsável em 09/10/2026. A primeira parte do marco 2 acrescenta clientes e projetos reais; consulte [o recorte 2A](marco-2a.md) para os critérios, endpoints e decisões implementados. Uploads e entrega de arquivos permanecem na parte 2B. O restante deste documento orienta os próximos marcos.
 
 Decisão operacional: desenvolvimento sem Docker/Compose. PostgreSQL 18.6 nativo, API Node e Flutter executam localmente. O Windows principal não pode ser atualizado; não exigir troca de sistema ou versões antigas de Docker. A validação no segundo PC fica adiada até depois da organização no GitHub e de nova decisão do responsável. Ver [ADR 0001](adr/0001-desenvolvimento-nativo.md) e [progresso](progress.md).
 
@@ -318,3 +318,5 @@ Prisma, NestJS e plugins Flutter terão versões e sintaxe verificadas na implem
 
 - 08/10/2026 — v1.1: PRD inicial e recorte do marco 1.
 - 09/10/2026 — v1.2: validação manual do marco 1 confirmada; PostgreSQL nativo adotado como padrão; Docker/Compose retirado do desenvolvimento; teste no segundo PC adiado; organização e publicação privada no GitHub autorizadas.
+
+- 09/10/2026 — v1.3: marco 2 dividido em 2A (clientes/projetos, edição, busca, paginação e arquivamento) e 2B (arquivos); 2A implementado com FK composta, saldo BRL em centavos e controle otimista de edição.

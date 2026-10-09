@@ -6,7 +6,7 @@ Atualizado em 09/10/2026.
 
 Cadastro, workspace pessoal OWNER, login, me, logout e dashboard protegido implementados. O responsável confirmou a conferência manual em 09/10/2026: cadastro/acesso, recarregamento mantendo sessão, logout e novo login funcionaram.
 
-A implementação contém sessão opaca com hash SHA256, Argon2id, validação, CSRF/Origin, rate limit, OpenAPI e cliente Dart gerado. O dashboard vazio é intencional.
+A implementação contém sessão opaca com hash SHA256, Argon2id, validação, CSRF/Origin, rate limit, OpenAPI e cliente Dart gerado. O dashboard vazio fazia parte do marco 1; o marco 2A acrescenta dados reais de clientes e projetos.
 
 ## Ambiente adotado
 
@@ -19,7 +19,7 @@ A implementação contém sessão opaca com hash SHA256, Argon2id, validação, 
 
 Veja [ADR 0001](adr/0001-desenvolvimento-nativo.md) e [operação Windows](windows-sem-docker.md). Não exclua .tools/postgresql/dev-data: contém o banco persistente local e não é cache descartável.
 
-## Evidências de validação
+## Evidências do marco 1
 
 | Check | Resultado observado |
 |---|---|
@@ -50,6 +50,31 @@ O PRD original foi atualizado para v1.2 e organizado em [docs/prd.md](prd.md). S
 
 Não há deploy ou publicação do aplicativo. Recursos de upload, processamento, portal cliente, pagamentos e assinatura não foram implementados.
 
+
+## Marco 2A — implementação local em 09/10/2026
+
+Clientes: cadastro, edição, e-mail único por workspace, busca e paginação. Projetos: cadastro, edição, saldo BRL em centavos, revisões incluídas, busca, paginação e arquivamento com consulta separada. Formulários em pt-BR com estados de espera, erro e confirmação, seleção paginada de clientes e layout verificado nos testes em 360/768/1440 px.
+
+API e banco reforçam isolamento por workspace, FK composta cliente/projeto, validação de dados, CSRF/Origin e revisão otimista para edições concorrentes. OpenAPI e gerador Dart foram ampliados sem novas dependências; lockfiles preservados. Ver [decisões e uso](marco-2a.md).
+
+### Resultados executados nesta entrega
+
+- Prisma generate/validate: passaram.
+- Lint, typecheck e build de database/API: passaram.
+- API unitária: 7 testes passaram.
+- Integração PostgreSQL nativo: 15 testes reportados (13 cenários e 2 pais), 0 falhas, 0 skipped. Schema isolado cofre_test_449e6cd55881412e9cb1367e4ef01a71, sem destruir dados de desenvolvimento.
+- Flutter analyze: sem issues.
+- Flutter test: 14 testes passaram, incluindo fluxo criar/editar/arquivar nos três tamanhos de tela, validação de valores e conflito.
+- OpenAPI/Dart: contracts:check passou.
+- Migration incremental aplicada no banco local: hash dos dados de User, Workspace e WorkspaceMember idêntico antes/depois; uma conta, um workspace e um vínculo preservados. Nenhum cliente/projeto fictício inserido no banco local.
+- API local na porta 3001: health/ready 200 e OpenAPI versão 1.1.0. Porta 3000 ocupada por outro programa, preservado. Flutter servido em localhost:8080 com HTTP 200 e bootstrap presente, conectado à API 3001.
+- Flutter build web --release: passou; Wasm dry run também passou. O runtime Wasm separado não foi testado.
+- git diff --check: passou.
+
+A primeira tentativa de integração encontrou um erro de tipagem no teste de paginação; corrigido, a suíte completa passou. A análise Flutter inicialmente foi iniciada na raiz por engano, interrompida e refeita corretamente em apps/flutter_app. O controle automatizado de navegador ficou indisponível por falha de inicialização do sandbox; não houve conferência visual/e2e em navegador nesta entrega. A aprovação manual anterior se refere somente ao marco 1. A nova interface aguarda conferência manual do responsável.
+
+Trabalho na branch codex/clientes-projetos. Commit e push desta entrega autorizados pelo responsável em 09/10/2026; sem deploy. PRD atualizado para v1.3. A branch main mantém o marco 1 até revisão e merge desta mudança.
+
 ## Próximo trabalho de produto
 
-Marco 2, primeira parte proposta: clientes e projetos reais, com isolamento por workspace. Upload e download privado vêm na segunda parte desse marco, com preparo de armazenamento próprio. Nenhum desses recursos foi iniciado nesta organização.
+Conferir manualmente o marco 2A e revisar/versionar esta mudança quando autorizado. Depois, planejar o marco 2B: armazenamento e entrega privada de arquivos. Upload, download, processamento, portal, pagamentos e assinatura ainda não foram implementados. O teste no segundo PC segue adiado.

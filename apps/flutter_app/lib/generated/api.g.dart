@@ -132,17 +132,192 @@ class LoginDto {
   };
 }
 
+class ClientView {
+  final String id;
+  final String name;
+  final String email;
+  final int revision;
+  const ClientView({required this.id, required this.name, required this.email, required this.revision});
+  factory ClientView.fromJson(Map<String, dynamic> json) => ClientView(
+    id: json['id'] as String,
+    name: json['name'] as String,
+    email: json['email'] as String,
+    revision: json['revision'] as int,
+  );
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'email': email,
+    'revision': revision,
+  };
+}
+
+class ProjectView {
+  final String id;
+  final String title;
+  final ClientView client;
+  final String currency;
+  final int balanceCents;
+  final int includedRevisionRounds;
+  final String status;
+  final int revision;
+  const ProjectView({required this.id, required this.title, required this.client, required this.currency, required this.balanceCents, required this.includedRevisionRounds, required this.status, required this.revision});
+  factory ProjectView.fromJson(Map<String, dynamic> json) => ProjectView(
+    id: json['id'] as String,
+    title: json['title'] as String,
+    client: ClientView.fromJson(json['client'] as Map<String, dynamic>),
+    currency: json['currency'] as String,
+    balanceCents: json['balanceCents'] as int,
+    includedRevisionRounds: json['includedRevisionRounds'] as int,
+    status: json['status'] as String,
+    revision: json['revision'] as int,
+  );
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'client': client.toJson(),
+    'currency': currency,
+    'balanceCents': balanceCents,
+    'includedRevisionRounds': includedRevisionRounds,
+    'status': status,
+    'revision': revision,
+  };
+}
+
 class ProjectsView {
-  final List<Map<String, dynamic>> items;
+  final List<ProjectView> items;
   final String? nextCursor;
   const ProjectsView({required this.items, required this.nextCursor});
   factory ProjectsView.fromJson(Map<String, dynamic> json) => ProjectsView(
-    items: (json['items'] as List<dynamic>).map((e) => e as Map<String, dynamic>).toList(),
+    items: (json['items'] as List<dynamic>).map((e) => ProjectView.fromJson(e as Map<String, dynamic>)).toList(),
     nextCursor: json['nextCursor'] == null ? null : json['nextCursor'] as String,
   );
   Map<String, dynamic> toJson() => {
-    'items': items.map((e) => e).toList(),
+    'items': items.map((e) => e.toJson()).toList(),
     'nextCursor': nextCursor,
+  };
+}
+
+class ProjectDto {
+  final String clientId;
+  final String title;
+  static const titleMinLength = 1;
+  static const titleMaxLength = 120;
+  final int balanceCents;
+  static const balanceCentsMinimum = 0;
+  static const balanceCentsMaximum = 2147483647;
+  final int includedRevisionRounds;
+  static const includedRevisionRoundsMinimum = 0;
+  static const includedRevisionRoundsMaximum = 1000;
+  const ProjectDto({required this.clientId, required this.title, required this.balanceCents, required this.includedRevisionRounds});
+  factory ProjectDto.fromJson(Map<String, dynamic> json) => ProjectDto(
+    clientId: json['clientId'] as String,
+    title: json['title'] as String,
+    balanceCents: json['balanceCents'] as int,
+    includedRevisionRounds: json['includedRevisionRounds'] as int,
+  );
+  Map<String, dynamic> toJson() => {
+    'clientId': clientId,
+    'title': title,
+    'balanceCents': balanceCents,
+    'includedRevisionRounds': includedRevisionRounds,
+  };
+}
+
+class UpdateProjectDto {
+  final String clientId;
+  final String title;
+  static const titleMinLength = 1;
+  static const titleMaxLength = 120;
+  final int balanceCents;
+  static const balanceCentsMinimum = 0;
+  static const balanceCentsMaximum = 2147483647;
+  final int includedRevisionRounds;
+  static const includedRevisionRoundsMinimum = 0;
+  static const includedRevisionRoundsMaximum = 1000;
+  final int revision;
+  static const revisionMinimum = 1;
+  static const revisionMaximum = 2147483646;
+  const UpdateProjectDto({required this.clientId, required this.title, required this.balanceCents, required this.includedRevisionRounds, required this.revision});
+  factory UpdateProjectDto.fromJson(Map<String, dynamic> json) => UpdateProjectDto(
+    clientId: json['clientId'] as String,
+    title: json['title'] as String,
+    balanceCents: json['balanceCents'] as int,
+    includedRevisionRounds: json['includedRevisionRounds'] as int,
+    revision: json['revision'] as int,
+  );
+  Map<String, dynamic> toJson() => {
+    'clientId': clientId,
+    'title': title,
+    'balanceCents': balanceCents,
+    'includedRevisionRounds': includedRevisionRounds,
+    'revision': revision,
+  };
+}
+
+class RevisionDto {
+  final int revision;
+  static const revisionMinimum = 1;
+  static const revisionMaximum = 2147483646;
+  const RevisionDto({required this.revision});
+  factory RevisionDto.fromJson(Map<String, dynamic> json) => RevisionDto(
+    revision: json['revision'] as int,
+  );
+  Map<String, dynamic> toJson() => {
+    'revision': revision,
+  };
+}
+
+class ClientsView {
+  final List<ClientView> items;
+  final String? nextCursor;
+  const ClientsView({required this.items, required this.nextCursor});
+  factory ClientsView.fromJson(Map<String, dynamic> json) => ClientsView(
+    items: (json['items'] as List<dynamic>).map((e) => ClientView.fromJson(e as Map<String, dynamic>)).toList(),
+    nextCursor: json['nextCursor'] == null ? null : json['nextCursor'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'items': items.map((e) => e.toJson()).toList(),
+    'nextCursor': nextCursor,
+  };
+}
+
+class ClientDto {
+  final String name;
+  static const nameMinLength = 1;
+  static const nameMaxLength = 120;
+  final String email;
+  static const emailMaxLength = 254;
+  const ClientDto({required this.name, required this.email});
+  factory ClientDto.fromJson(Map<String, dynamic> json) => ClientDto(
+    name: json['name'] as String,
+    email: json['email'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'email': email,
+  };
+}
+
+class UpdateClientDto {
+  final String name;
+  static const nameMinLength = 1;
+  static const nameMaxLength = 120;
+  final String email;
+  static const emailMaxLength = 254;
+  final int revision;
+  static const revisionMinimum = 1;
+  static const revisionMaximum = 2147483646;
+  const UpdateClientDto({required this.name, required this.email, required this.revision});
+  factory UpdateClientDto.fromJson(Map<String, dynamic> json) => UpdateClientDto(
+    name: json['name'] as String,
+    email: json['email'] as String,
+    revision: json['revision'] as int,
+  );
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'email': email,
+    'revision': revision,
   };
 }
 
@@ -163,34 +338,88 @@ class CofreClient {
   final JsonTransport transport;
   const CofreClient(this.transport);
   Future<CsrfView> authcsrf() async {
-    final json = await transport('GET', '/api/v1/auth/csrf', null);
+    final path = '/api/v1/auth/csrf';
+    final json = await transport('GET', path, null);
     return CsrfView.fromJson(json as Map<String, dynamic>);
   }
   Future<IdentityView> authregister(RegisterDto body) async {
-    final json = await transport('POST', '/api/v1/auth/register', body.toJson());
+    final path = '/api/v1/auth/register';
+    final json = await transport('POST', path, body.toJson());
     return IdentityView.fromJson(json as Map<String, dynamic>);
   }
   Future<IdentityView> authlogin(LoginDto body) async {
-    final json = await transport('POST', '/api/v1/auth/login', body.toJson());
+    final path = '/api/v1/auth/login';
+    final json = await transport('POST', path, body.toJson());
     return IdentityView.fromJson(json as Map<String, dynamic>);
   }
   Future<IdentityView> authme() async {
-    final json = await transport('GET', '/api/v1/auth/me', null);
+    final path = '/api/v1/auth/me';
+    final json = await transport('GET', path, null);
     return IdentityView.fromJson(json as Map<String, dynamic>);
   }
   Future<void> authlogout() async {
-    await transport('POST', '/api/v1/auth/logout', null);
+    final path = '/api/v1/auth/logout';
+    await transport('POST', path, null);
   }
-  Future<ProjectsView> projectslist() async {
-    final json = await transport('GET', '/api/v1/projects', null);
+  Future<ProjectsView> projectslist({String? cursor, int? limit, String? search, String? status}) async {
+    final query = <String, String>{
+      if (cursor != null) 'cursor': cursor.toString(),
+      if (limit != null) 'limit': limit.toString(),
+      if (search != null) 'search': search.toString(),
+      if (status != null) 'status': status.toString(),
+    };
+    final path = Uri(path: '/api/v1/projects', queryParameters: query.isEmpty ? null : query).toString();
+    final json = await transport('GET', path, null);
     return ProjectsView.fromJson(json as Map<String, dynamic>);
   }
+  Future<ProjectView> projectscreate(ProjectDto body) async {
+    final path = '/api/v1/projects';
+    final json = await transport('POST', path, body.toJson());
+    return ProjectView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<ProjectView> projectsget({required String id}) async {
+    final path = '/api/v1/projects/${Uri.encodeComponent(id)}';
+    final json = await transport('GET', path, null);
+    return ProjectView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<ProjectView> projectsupdate(UpdateProjectDto body, {required String id}) async {
+    final path = '/api/v1/projects/${Uri.encodeComponent(id)}';
+    final json = await transport('PATCH', path, body.toJson());
+    return ProjectView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<ProjectView> projectsarchive(RevisionDto body, {required String id}) async {
+    final path = '/api/v1/projects/${Uri.encodeComponent(id)}/archive';
+    final json = await transport('POST', path, body.toJson());
+    return ProjectView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<ClientsView> clientslist({String? cursor, int? limit, String? search}) async {
+    final query = <String, String>{
+      if (cursor != null) 'cursor': cursor.toString(),
+      if (limit != null) 'limit': limit.toString(),
+      if (search != null) 'search': search.toString(),
+    };
+    final path = Uri(path: '/api/v1/clients', queryParameters: query.isEmpty ? null : query).toString();
+    final json = await transport('GET', path, null);
+    return ClientsView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<ClientView> clientscreate(ClientDto body) async {
+    final path = '/api/v1/clients';
+    final json = await transport('POST', path, body.toJson());
+    return ClientView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<ClientView> clientsupdate(UpdateClientDto body, {required String id}) async {
+    final path = '/api/v1/clients/${Uri.encodeComponent(id)}';
+    final json = await transport('PATCH', path, body.toJson());
+    return ClientView.fromJson(json as Map<String, dynamic>);
+  }
   Future<HealthView> healthhealth() async {
-    final json = await transport('GET', '/api/v1/health', null);
+    final path = '/api/v1/health';
+    final json = await transport('GET', path, null);
     return HealthView.fromJson(json as Map<String, dynamic>);
   }
   Future<HealthView> healthready() async {
-    final json = await transport('GET', '/api/v1/ready', null);
+    final path = '/api/v1/ready';
+    final json = await transport('GET', path, null);
     return HealthView.fromJson(json as Map<String, dynamic>);
   }
 }

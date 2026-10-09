@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cofre_app/main.dart';
+import 'package:cofre_app/application/work.dart';
+
+import 'fake_work.dart';
+
 import 'package:cofre_app/application/session.dart';
 import 'package:cofre_app/data/auth_repository.dart';
 import 'package:cofre_app/generated/api.g.dart';
@@ -54,6 +58,7 @@ Future<void> mount(
   WidgetTester tester,
   FakeAuth repo, {
   double width = 768,
+  FakeWork? work,
 }) async {
   tester.view.physicalSize = Size(width, 1000);
   tester.view.devicePixelRatio = 1;
@@ -61,7 +66,10 @@ Future<void> mount(
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [authRepositoryProvider.overrideWithValue(repo)],
+      overrides: [
+        authRepositoryProvider.overrideWithValue(repo),
+        workRepositoryProvider.overrideWithValue(work ?? FakeWork()),
+      ],
       child: const CofreApp(),
     ),
   );

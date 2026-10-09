@@ -17,6 +17,6 @@ function run(args) {
 run(['db:generate']);
 run(['db:migrate']);
 run(['build']);
-const result = spawnSync(process.execPath, ['--test', 'apps/api/dist/test/auth.integration.js'], { stdio: 'inherit', env });
+const result = spawnSync(process.execPath, ['--test', '--test-concurrency=1', 'apps/api/dist/test/auth.integration.js', 'apps/api/dist/test/work.integration.js'], { stdio: 'inherit', env });
 console.log('Schema isolado de teste preservado: ' + url.searchParams.get('schema'));
 process.exit(result.status ?? 1);

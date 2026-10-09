@@ -7,20 +7,22 @@ import cookieParser from 'cookie-parser';
 import { randomUUID } from 'node:crypto';
 import type { NextFunction, Response } from 'express';
 import { createDatabase, type Database } from '@cofre/database';
+import { ClientsController, ProjectsController } from './work.controllers.js';
+import { WorkService } from './work.service.js';
 import { AuthService } from './auth.service.js';
-import { AuthController, HealthController, ProjectsController } from './controllers.js';
+import { AuthController, HealthController } from './controllers.js';
 import { DATABASE, SETTINGS, settings, type Settings } from './config.js';
 import { ErrorFilter } from './errors.js';
 import { type AuthRequest, MutationGuard, SessionGuard } from './security.js';
 export function openapi(app: INestApplication) {
- return SwaggerModule.createDocument(app, new DocumentBuilder().setTitle('Cofre de Entregáveis').setDescription('Marco 1. Sessão opaca em cookie HttpOnly. Em produção o cookie chama-se __Host-cofre-session. Antes de mutations, GET /auth/csrf com credentials; enviar csrfToken em X-CSRF-Token, JSON e Origin exata.').setVersion('1.0.0').addCookieAuth('cofre-session', { type: 'apiKey', in: 'cookie' }, 'session').build());
+ return SwaggerModule.createDocument(app, new DocumentBuilder().setTitle('Cofre de Entregáveis').setDescription('Marco 2A: clientes e projetos. Sessão opaca em cookie HttpOnly. Em produção o cookie chama-se __Host-cofre-session. Antes de mutations, GET /auth/csrf com credentials; enviar csrfToken em X-CSRF-Token, JSON e Origin exata.').setVersion('1.1.0').addCookieAuth('cofre-session', { type: 'apiKey', in: 'cookie' }, 'session').build());
 }
 export async function createApp(config: Settings = settings(), options: { database?: Database; quiet?: boolean } = {}) {
  const db = options.database ?? createDatabase(config.databaseUrl);
  @Module({
   imports: [ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }])],
-  controllers: [AuthController, ProjectsController, HealthController],
-  providers: [{ provide: SETTINGS, useValue: config }, { provide: DATABASE, useValue: db }, AuthService, SessionGuard, MutationGuard],
+  controllers: [AuthController, ProjectsController, ClientsController, HealthController],
+  providers: [{ provide: SETTINGS, useValue: config }, { provide: DATABASE, useValue: db }, AuthService, WorkService, SessionGuard, MutationGuard],
  })
  class AppModule {}
  const app = await NestFactory.create(AppModule, { logger: false });
@@ -36,7 +38,7 @@ export async function createApp(config: Settings = settings(), options: { databa
   next();
  });
  app.use(cookieParser());
- if (!config.production) app.enableCors({ origin: config.origin, credentials: true, methods: ['GET', 'POST', 'OPTIONS'], allowedHeaders: ['Content-Type', 'X-CSRF-Token'] });
+ if (!config.production) app.enableCors({ origin: config.origin, credentials: true, methods: ['GET', 'POST', 'PATCH', 'OPTIONS'], allowedHeaders: ['Content-Type', 'X-CSRF-Token'] });
  app.useGlobalFilters(new ErrorFilter());
  app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true, validationError: { target: false, value: false },
   exceptionFactory: errors => new BadRequestException({ code: 'VALIDATION_ERROR', message: 'Revise os campos informados.', details: { fields: errors.map(e => e.property) } }),

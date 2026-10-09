@@ -38,7 +38,7 @@ for (const [name, schema] of Object.entries(schemas)) {
   const optional = !schema.required?.includes(key);
   const t = type(prop);
   out += '  final ' + t + (optional && !t.endsWith('?') ? '?' : '') + ' ' + key + ';\n';
-  for (const rule of ['minLength', 'maxLength']) if (prop[rule] !== undefined) out += '  static const ' + key + rule[0].toUpperCase() + rule.slice(1) + ' = ' + prop[rule] + ';\n';
+  for (const rule of ['minLength', 'maxLength', 'minimum', 'maximum']) if (prop[rule] !== undefined) out += '  static const ' + key + rule[0].toUpperCase() + rule.slice(1) + ' = ' + prop[rule] + ';\n';
  }
  out += '  const ' + name + '({' + props.map(([key]) => (schema.required?.includes(key) ? 'required ' : '') + 'this.' + key).join(', ') + '});\n';
  out += '  factory ' + name + '.fromJson(Map<String, dynamic> json) => ' + name + '(\n';
@@ -55,8 +55,20 @@ for (const [path, verbs] of Object.entries(spec.paths)) for (const [verb, op] of
  const method = op.operationId.replace(/Controller_/, '').replace(/^[A-Z]/, c => c.toLowerCase());
  const input = op.requestBody?.content?.['application/json']?.schema;
  const response = Object.entries(op.responses).find(([status]) => status.startsWith('2'))?.[1].content?.['application/json']?.schema;
- out += '  Future<' + (response ? type(response) : 'void') + '> ' + method + '(' + (input ? type(input) + ' body' : '') + ') async {\n';
- out += '    ' + (response ? 'final json = ' : '') + "await transport('" + verb.toUpperCase() + "', '" + path + "', " + (input ? 'body.toJson()' : 'null') + ');\n';
+ const params = (op.parameters ?? []).filter(p => p.in === 'path' || p.in === 'query');
+ const positional = input ? [type(input) + ' body'] : [];
+ const named = params.map(p => (p.required ? 'required ' : '') + type(p.schema) + (p.required ? '' : '?') + ' ' + p.name);
+ const signature = [...positional, ...(named.length ? ['{' + named.join(', ') + '}'] : [])].join(', ');
+ const route = path.replace(/\{([^}]+)\}/g, (_, name) => '${Uri.encodeComponent(' + name + ')}');
+ out += '  Future<' + (response ? type(response) : 'void') + '> ' + method + '(' + signature + ') async {\n';
+ const query = params.filter(p => p.in === 'query');
+ if (query.length) {
+  out += '    final query = <String, String>{\n';
+  for (const p of query) out += "      " + (p.required ? '' : 'if (' + p.name + ' != null) ') + "'" + p.name + "': " + p.name + ".toString(),\n";
+  out += '    };\n';
+ }
+ out += "    final path = " + (query.length ? "Uri(path: '" + route + "', queryParameters: query.isEmpty ? null : query).toString()" : "'" + route + "'") + ";\n";
+ out += '    ' + (response ? 'final json = ' : '') + "await transport('" + verb.toUpperCase() + "', path, " + (input ? 'body.toJson()' : 'null') + ');\n';
  if (response) out += '    return ' + decode(response, 'json') + ';\n';
  out += '  }\n';
 }

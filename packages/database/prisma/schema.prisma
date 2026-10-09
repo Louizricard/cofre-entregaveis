@@ -26,6 +26,8 @@ model Workspace {
  name String @db.VarChar(120)
  createdAt DateTime @default(now()) @db.Timestamptz(3)
  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+ clients Client[]
+ projects Project[]
  members WorkspaceMember[]
  sessions Session[]
 }
@@ -51,4 +53,40 @@ model Session {
  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
  @@index([userId, expiresAt])
  @@index([workspaceId])
+}
+
+enum ProjectStatus {
+ ACTIVE
+ ARCHIVED
+}
+model Client {
+ id String @id @default(uuid()) @db.Uuid
+ workspaceId String @db.Uuid
+ name String @db.VarChar(120)
+ email String @db.VarChar(254)
+ revision Int @default(1)
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ updatedAt DateTime @updatedAt @db.Timestamptz(3)
+ workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+ projects Project[]
+ @@unique([workspaceId, email])
+ @@unique([id, workspaceId])
+ @@index([workspaceId, id])
+}
+model Project {
+ id String @id @default(uuid()) @db.Uuid
+ workspaceId String @db.Uuid
+ clientId String @db.Uuid
+ title String @db.VarChar(120)
+ currency String @default("BRL") @db.Char(3)
+ balanceCents Int
+ includedRevisionRounds Int
+ status ProjectStatus @default(ACTIVE)
+ revision Int @default(1)
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ updatedAt DateTime @updatedAt @db.Timestamptz(3)
+ workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+ client Client @relation(fields: [clientId, workspaceId], references: [id, workspaceId], onDelete: Restrict)
+ @@index([workspaceId, status, id])
+ @@index([clientId, workspaceId])
 }
