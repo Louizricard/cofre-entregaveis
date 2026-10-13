@@ -9,6 +9,7 @@ import '../data/upload_file.dart';
 import '../generated/api.g.dart';
 import 'preview.dart';
 import 'manual_preview.dart';
+import 'sharing.dart';
 
 final uploadFilePickerProvider = Provider<Future<UploadFile?> Function()>(
   (ref) => pickUploadFile,
@@ -379,11 +380,49 @@ class _FilesPanelState extends ConsumerState<FilesPanel> {
     }
   }
 
+  Future<void> _publish(VersionView version) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Publicar V${version.number}?'),
+        content: const Text(
+          'Os arquivos e a prévia manual desta versão não poderão mais ser alterados. Para mudanças, crie uma nova versão. A versão atual ficará no histórico.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Confirmar publicação'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    _setBusy(true);
+    setState(() => _error = null);
+    try {
+      await _repo.publish(version.id, version.projectRevision);
+      if (mounted)
+        setState(
+          () => _notice =
+              'V${version.number} publicada. Use Compartilhar prévias para criar o link do cliente.',
+        );
+      await _load();
+    } catch (e) {
+      if (mounted) setState(() => _error = _message(e));
+    } finally {
+      _setBusy(false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final assets =
-        _versions.where((v) => v.id == _selected).firstOrNull?.assets ??
-        <AssetView>[];
+    final version = _versions.where((v) => v.id == _selected).firstOrNull;
+    final editable = widget.active && version?.state == 'DRAFT';
+    final assets = version?.assets ?? <AssetView>[];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -464,17 +503,48 @@ class _FilesPanelState extends ConsumerState<FilesPanel> {
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Text('Crie a primeira versão para organizar os arquivos.'),
           ),
+        if (version != null && version.state != 'DRAFT')
+          const Padding(
+            padding: EdgeInsets.only(top: 12),
+            child: Text(
+              'Versão publicada: arquivos e prévia manual preservados. Para alterações, crie uma nova versão.',
+            ),
+          ),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: [
+            if (editable && version != null)
+              OutlinedButton.icon(
+                onPressed:
+                    _busy ||
+                        _loading ||
+                        _file != null ||
+                        !assets.any((a) => a.status == 'READY')
+                    ? null
+                    : () => _publish(version),
+                icon: const Icon(Icons.publish),
+                label: const Text('Publicar versão'),
+              ),
+            if (widget.active)
+              OutlinedButton.icon(
+                onPressed: _busy || _loading
+                    ? null
+                    : () => showDialog<void>(
+                        context: context,
+                        builder: (_) =>
+                            SharingDialog(projectId: widget.projectId),
+                      ),
+                icon: const Icon(Icons.share),
+                label: const Text('Compartilhar prévias'),
+              ),
             if (widget.active)
               OutlinedButton(
                 onPressed: _busy || _loading || _file != null ? null : _version,
                 child: const Text('Nova versão'),
               ),
-            if (widget.active && _selected != null)
+            if (editable && _selected != null)
               FilledButton.icon(
                 onPressed:
                     _busy ||
@@ -581,7 +651,7 @@ class _FilesPanelState extends ConsumerState<FilesPanel> {
                       if (a.status == 'READY' &&
                           a.scanStatus == 'CLEAN' &&
                           a.mime == 'application/zip' &&
-                          widget.active)
+                          editable)
                         TextButton.icon(
                           onPressed: _busy
                               ? null

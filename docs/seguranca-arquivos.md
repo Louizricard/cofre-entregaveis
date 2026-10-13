@@ -1,6 +1,6 @@
 # Análise de segurança dos arquivos
 
-O worker verifica cada original READY com ClamAV antes de liberar download ou processamento de prévias. Isso inclui ZIP, fontes de prévia manual e arquivos anteriores à migration. O portal convidado continua pendente.
+O worker verifica cada original READY com ClamAV antes de liberar download ou processamento de prévias. Isso inclui ZIP, fontes de prévia manual e arquivos anteriores à migration. O portal de leitura de prévias foi acrescentado na etapa seguinte; consulte [portal-previas.md](portal-previas.md).
 
 ## Preparar e executar no Windows
 
@@ -27,7 +27,7 @@ Scanner e parsers rodam em AppContainers Windows descartáveis, sem capabilities
 
 Processos são criados suspensos e associados a Job Object antes de executar: renderização com 768 MiB agregados, até dois processos e limite externo de CPU de 120 s; scanner com 3 GiB, um processo e 120 s de CPU. O parser conserva seu limite interno de 90 s e timeout de 180 s. Fechar o Job encerra os descendentes. FFmpeg herda o isolamento; protocolos e demuxers continuam restritos.
 
-O adaptador AppContainer foi validado somente no Windows. Outros sistemas falham sem executar parsers desprotegidos; precisam de implementação própria de isolamento antes de uso. Antivírus e isolamento reduzem risco, mas não comprovam ausência de malware. Autorização de convidados, publicação, revisão e aprovação ainda precisam de implementação e testes.
+O adaptador AppContainer foi validado somente no Windows. Outros sistemas falham sem executar parsers desprotegidos; precisam de implementação própria de isolamento antes de uso. Antivírus e isolamento reduzem risco, mas não comprovam ausência de malware. Sessão convidada limitada para leitura foi acrescentada posteriormente. Identidade confirmada, revisão e aprovação continuam pendentes. Publicação de versões foi acrescentada na etapa seguinte, conforme [publicacao-versoes.md](publicacao-versoes.md).
 
 ## Verificar
 

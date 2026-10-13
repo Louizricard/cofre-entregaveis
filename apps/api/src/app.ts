@@ -14,6 +14,8 @@ import { ProjectsService } from './projects.service.js';
 import { FilesController } from './files.controller.js';
 import { FilesService, MAINTENANCE } from './files.service.js';
 import { MediaService } from './media.service.js';
+import { SharingService } from './sharing.service.js';
+import { SharingController, GuestController } from './sharing.controller.js';
 import { R2Storage, STORAGE, type ObjectStorage } from './storage.js';
 import { DATABASE, SETTINGS, settings, type Settings } from './config.js';
 import { ErrorFilter } from './errors.js';
@@ -25,11 +27,11 @@ export async function createApp(config: Settings = settings(), options: { databa
  const db = options.database ?? createDatabase(config.databaseUrl);
  @Module({
   imports: [ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }])],
-  controllers: [AuthController, ProjectsController, ClientsController, HealthController, FilesController],
+  controllers: [AuthController, ProjectsController, ClientsController, HealthController, FilesController, SharingController, GuestController],
   providers: [{ provide: SETTINGS, useValue: config }, { provide: DATABASE, useValue: db },
    { provide: STORAGE, useValue: options.storage !== undefined ? options.storage : config.storage ? new R2Storage(config.storage) : null },
    { provide: MAINTENANCE, useValue: !options.quiet },
-   AuthService, ProjectsService, FilesService, MediaService, SessionGuard, MutationGuard],
+   AuthService, ProjectsService, FilesService, MediaService, SharingService, SessionGuard, MutationGuard],
  })
  class AppModule {}
  const app = await NestFactory.create(AppModule, { logger: false });

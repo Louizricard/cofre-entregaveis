@@ -28,7 +28,7 @@ Em outro terminal:
 
 ```powershell
 cd apps/flutter_app
-..\..\.tools\flutter\bin\flutter.bat run -d web-server --web-hostname localhost --web-port 8080 --dart-define=API_ORIGIN=http://localhost:3000
+..\..\.tools\flutter\bin\flutter.bat run --no-web-resources-cdn -d web-server --web-hostname localhost --web-port 8080 --dart-define=API_ORIGIN=http://localhost:3000
 ```
 
 Abra http://localhost:8080. Depois de reiniciar o Windows, inicie banco, API e Flutter novamente. Os dados do banco ficam persistidos em `.tools/postgresql/dev-data`; não apague essa pasta. Não execute outra instância de PostgreSQL nas mesmas portas.

@@ -30,10 +30,14 @@ export class AssetView {
  @ApiProperty({ type: String, nullable: true }) failureCode!: string | null;
  @ApiProperty({ type: String, format: 'date-time' }) expiresAt!: Date;
 }
+export class PublishVersionDto {
+ @ApiProperty({ type: 'integer', minimum: 0, maximum: 2147483647 }) @IsInt() @Min(0) @Max(2147483647) expectedProjectRevision!: number;
+}
 export class VersionView {
+ @ApiProperty({ type: 'integer' }) projectRevision!: number;
  @ApiProperty({ format: 'uuid' }) id!: string;
  @ApiProperty({ type: 'integer' }) number!: number;
- @ApiProperty({ enum: ['DRAFT'] }) state!: string;
+ @ApiProperty({ enum: ['DRAFT', 'PUBLISHED', 'SUPERSEDED'] }) state!: string;
  @ApiProperty({ type: String, format: 'date-time' }) createdAt!: Date;
  @ApiProperty({ type: [AssetView] }) assets!: AssetView[];
 }

@@ -412,13 +412,15 @@ class AssetView {
 }
 
 class VersionView {
+  final int projectRevision;
   final String id;
   final int number;
   final String state;
   final String createdAt;
   final List<AssetView> assets;
-  const VersionView({required this.id, required this.number, required this.state, required this.createdAt, required this.assets});
+  const VersionView({required this.projectRevision, required this.id, required this.number, required this.state, required this.createdAt, required this.assets});
   factory VersionView.fromJson(Map<String, dynamic> json) => VersionView(
+    projectRevision: json['projectRevision'] as int,
     id: json['id'] as String,
     number: json['number'] as int,
     state: json['state'] as String,
@@ -426,6 +428,7 @@ class VersionView {
     assets: (json['assets'] as List<dynamic>).map((e) => AssetView.fromJson(e as Map<String, dynamic>)).toList(),
   );
   Map<String, dynamic> toJson() => {
+    'projectRevision': projectRevision,
     'id': id,
     'number': number,
     'state': state,
@@ -445,6 +448,19 @@ class VersionsView {
   Map<String, dynamic> toJson() => {
     'items': items.map((e) => e.toJson()).toList(),
     'nextCursor': nextCursor,
+  };
+}
+
+class PublishVersionDto {
+  final int expectedProjectRevision;
+  static const expectedProjectRevisionMinimum = 0;
+  static const expectedProjectRevisionMaximum = 2147483647;
+  const PublishVersionDto({required this.expectedProjectRevision});
+  factory PublishVersionDto.fromJson(Map<String, dynamic> json) => PublishVersionDto(
+    expectedProjectRevision: json['expectedProjectRevision'] as int,
+  );
+  Map<String, dynamic> toJson() => {
+    'expectedProjectRevision': expectedProjectRevision,
   };
 }
 
@@ -563,6 +579,202 @@ class DownloadView {
   Map<String, dynamic> toJson() => {
     'url': url,
     'expiresAt': expiresAt,
+  };
+}
+
+class CreateShareDto {
+  final String expiresAt;
+  const CreateShareDto({required this.expiresAt});
+  factory CreateShareDto.fromJson(Map<String, dynamic> json) => CreateShareDto(
+    expiresAt: json['expiresAt'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'expiresAt': expiresAt,
+  };
+}
+
+class CreatedShareView {
+  final String id;
+  final String expiresAt;
+  final String? revokedAt;
+  final String createdAt;
+  final String url;
+  const CreatedShareView({required this.id, required this.expiresAt, required this.revokedAt, required this.createdAt, required this.url});
+  factory CreatedShareView.fromJson(Map<String, dynamic> json) => CreatedShareView(
+    id: json['id'] as String,
+    expiresAt: json['expiresAt'] as String,
+    revokedAt: json['revokedAt'] == null ? null : json['revokedAt'] as String,
+    createdAt: json['createdAt'] as String,
+    url: json['url'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'expiresAt': expiresAt,
+    'revokedAt': revokedAt,
+    'createdAt': createdAt,
+    'url': url,
+  };
+}
+
+class ShareView {
+  final String id;
+  final String expiresAt;
+  final String? revokedAt;
+  final String createdAt;
+  const ShareView({required this.id, required this.expiresAt, required this.revokedAt, required this.createdAt});
+  factory ShareView.fromJson(Map<String, dynamic> json) => ShareView(
+    id: json['id'] as String,
+    expiresAt: json['expiresAt'] as String,
+    revokedAt: json['revokedAt'] == null ? null : json['revokedAt'] as String,
+    createdAt: json['createdAt'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'expiresAt': expiresAt,
+    'revokedAt': revokedAt,
+    'createdAt': createdAt,
+  };
+}
+
+class SharesView {
+  final List<ShareView> items;
+  final String? nextCursor;
+  const SharesView({required this.items, required this.nextCursor});
+  factory SharesView.fromJson(Map<String, dynamic> json) => SharesView(
+    items: (json['items'] as List<dynamic>).map((e) => ShareView.fromJson(e as Map<String, dynamic>)).toList(),
+    nextCursor: json['nextCursor'] == null ? null : json['nextCursor'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'items': items.map((e) => e.toJson()).toList(),
+    'nextCursor': nextCursor,
+  };
+}
+
+class BootstrapGuestDto {
+  final String token;
+  static const tokenMinLength = 43;
+  static const tokenMaxLength = 43;
+  const BootstrapGuestDto({required this.token});
+  factory BootstrapGuestDto.fromJson(Map<String, dynamic> json) => BootstrapGuestDto(
+    token: json['token'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'token': token,
+  };
+}
+
+class GuestAccessView {
+  final String expiresAt;
+  const GuestAccessView({required this.expiresAt});
+  factory GuestAccessView.fromJson(Map<String, dynamic> json) => GuestAccessView(
+    expiresAt: json['expiresAt'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'expiresAt': expiresAt,
+  };
+}
+
+class GuestVersionSummary {
+  final String id;
+  final int number;
+  final String state;
+  const GuestVersionSummary({required this.id, required this.number, required this.state});
+  factory GuestVersionSummary.fromJson(Map<String, dynamic> json) => GuestVersionSummary(
+    id: json['id'] as String,
+    number: json['number'] as int,
+    state: json['state'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'number': number,
+    'state': state,
+  };
+}
+
+class GuestProjectView {
+  final String title;
+  final String currency;
+  final int balanceCents;
+  final GuestVersionSummary currentVersion;
+  const GuestProjectView({required this.title, required this.currency, required this.balanceCents, required this.currentVersion});
+  factory GuestProjectView.fromJson(Map<String, dynamic> json) => GuestProjectView(
+    title: json['title'] as String,
+    currency: json['currency'] as String,
+    balanceCents: json['balanceCents'] as int,
+    currentVersion: GuestVersionSummary.fromJson(json['currentVersion'] as Map<String, dynamic>),
+  );
+  Map<String, dynamic> toJson() => {
+    'title': title,
+    'currency': currency,
+    'balanceCents': balanceCents,
+    'currentVersion': currentVersion.toJson(),
+  };
+}
+
+class GuestVersionsView {
+  final List<GuestVersionSummary> items;
+  final String? nextCursor;
+  const GuestVersionsView({required this.items, required this.nextCursor});
+  factory GuestVersionsView.fromJson(Map<String, dynamic> json) => GuestVersionsView(
+    items: (json['items'] as List<dynamic>).map((e) => GuestVersionSummary.fromJson(e as Map<String, dynamic>)).toList(),
+    nextCursor: json['nextCursor'] == null ? null : json['nextCursor'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'items': items.map((e) => e.toJson()).toList(),
+    'nextCursor': nextCursor,
+  };
+}
+
+class GuestAssetView {
+  final String id;
+  final String fileName;
+  final String mime;
+  final String sizeBytes;
+  const GuestAssetView({required this.id, required this.fileName, required this.mime, required this.sizeBytes});
+  factory GuestAssetView.fromJson(Map<String, dynamic> json) => GuestAssetView(
+    id: json['id'] as String,
+    fileName: json['fileName'] as String,
+    mime: json['mime'] as String,
+    sizeBytes: json['sizeBytes'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'fileName': fileName,
+    'mime': mime,
+    'sizeBytes': sizeBytes,
+  };
+}
+
+class GuestVersionView {
+  final String id;
+  final int number;
+  final String state;
+  final List<GuestAssetView> assets;
+  const GuestVersionView({required this.id, required this.number, required this.state, required this.assets});
+  factory GuestVersionView.fromJson(Map<String, dynamic> json) => GuestVersionView(
+    id: json['id'] as String,
+    number: json['number'] as int,
+    state: json['state'] as String,
+    assets: (json['assets'] as List<dynamic>).map((e) => GuestAssetView.fromJson(e as Map<String, dynamic>)).toList(),
+  );
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'number': number,
+    'state': state,
+    'assets': assets.map((e) => e.toJson()).toList(),
+  };
+}
+
+class GuestPreviewDto {
+  final int page;
+  static const pageMinimum = 1;
+  static const pageMaximum = 100;
+  const GuestPreviewDto({required this.page});
+  factory GuestPreviewDto.fromJson(Map<String, dynamic> json) => GuestPreviewDto(
+    page: json['page'] as int,
+  );
+  Map<String, dynamic> toJson() => {
+    'page': page,
   };
 }
 
@@ -699,6 +911,11 @@ class CofreClient {
     final json = await transport('POST', path, body.toJson());
     return VersionView.fromJson(json as Map<String, dynamic>);
   }
+  Future<VersionView> filespublish(PublishVersionDto body, String id) async {
+    final path = '/api/v1/versions/${Uri.encodeComponent(id.toString())}/publish';
+    final json = await transport('POST', path, body.toJson());
+    return VersionView.fromJson(json as Map<String, dynamic>);
+  }
   Future<UploadView> filesstart(StartUploadDto body, String id) async {
     final path = '/api/v1/versions/${Uri.encodeComponent(id.toString())}/uploads';
     final json = await transport('POST', path, body.toJson());
@@ -728,5 +945,65 @@ class CofreClient {
     final path = '/api/v1/assets/${Uri.encodeComponent(id.toString())}/download';
     final json = await transport('POST', path, body.toJson());
     return DownloadView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<CreatedShareView> sharingcreate(CreateShareDto body, String id) async {
+    final path = '/api/v1/projects/${Uri.encodeComponent(id.toString())}/shares';
+    final json = await transport('POST', path, body.toJson());
+    return CreatedShareView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<SharesView> sharinglist(String id, {String? cursor, int? limit, String? search}) async {
+    final path = '/api/v1/projects/${Uri.encodeComponent(id.toString())}/shares';
+    final query = <String, String>{
+      if (cursor != null) 'cursor': cursor.toString(),
+      if (limit != null) 'limit': limit.toString(),
+      if (search != null) 'search': search.toString(),
+    };
+    final target = query.isEmpty ? path : Uri(path: path, queryParameters: query).toString();
+    final json = await transport('GET', target, null);
+    return SharesView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<void> sharingrevoke(EmptyDto body, String id) async {
+    final path = '/api/v1/shares/${Uri.encodeComponent(id.toString())}';
+    await transport('DELETE', path, body.toJson());
+  }
+  Future<GuestAccessView> guestbootstrap(BootstrapGuestDto body) async {
+    final path = '/api/v1/guest/bootstrap';
+    final json = await transport('POST', path, body.toJson());
+    return GuestAccessView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<void> guestlogout(EmptyDto body) async {
+    final path = '/api/v1/guest/logout';
+    await transport('POST', path, body.toJson());
+  }
+  Future<GuestProjectView> guestproject() async {
+    final path = '/api/v1/guest/project';
+    final json = await transport('GET', path, null);
+    return GuestProjectView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<GuestVersionsView> guestversions({String? cursor, int? limit, String? search}) async {
+    final path = '/api/v1/guest/versions';
+    final query = <String, String>{
+      if (cursor != null) 'cursor': cursor.toString(),
+      if (limit != null) 'limit': limit.toString(),
+      if (search != null) 'search': search.toString(),
+    };
+    final target = query.isEmpty ? path : Uri(path: path, queryParameters: query).toString();
+    final json = await transport('GET', target, null);
+    return GuestVersionsView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<GuestVersionView> guestversion(String id) async {
+    final path = '/api/v1/guest/versions/${Uri.encodeComponent(id.toString())}';
+    final json = await transport('GET', path, null);
+    return GuestVersionView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<PreviewStateView> gueststatus(String id) async {
+    final path = '/api/v1/guest/assets/${Uri.encodeComponent(id.toString())}/preview-status';
+    final json = await transport('GET', path, null);
+    return PreviewStateView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<PreviewView> guestpreview(GuestPreviewDto body, String id) async {
+    final path = '/api/v1/guest/assets/${Uri.encodeComponent(id.toString())}/preview';
+    final json = await transport('POST', path, body.toJson());
+    return PreviewView.fromJson(json as Map<String, dynamic>);
   }
 }

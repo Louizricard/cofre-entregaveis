@@ -20,6 +20,7 @@ model User {
  updatedAt DateTime @updatedAt @db.Timestamptz(3)
  memberships WorkspaceMember[]
  sessions Session[]
+ publishedVersions ProjectVersion[]
 }
 model Workspace {
  id String @id @default(uuid()) @db.Uuid
@@ -60,6 +61,7 @@ model Project {
  includedRevisionRounds Int
  status ProjectStatus @default(ACTIVE)
  revision Int @default(0)
+ shares ShareLink[]
  versions ProjectVersion[]
  createdAt DateTime @default(now()) @db.Timestamptz(3)
  updatedAt DateTime @updatedAt @db.Timestamptz(3)
@@ -79,11 +81,20 @@ enum UploadStatus {
  ABORTED
  FAILED
 }
+enum VersionState {
+ DRAFT
+ PUBLISHED
+ SUPERSEDED
+}
 model ProjectVersion {
  id String @id @default(uuid()) @db.Uuid
  workspaceId String @db.Uuid
  projectId String @db.Uuid
  number Int
+ state VersionState @default(DRAFT)
+ publishedAt DateTime? @db.Timestamptz(3)
+ publishedById String? @db.Uuid
+ publishedBy User? @relation(fields: [publishedById], references: [id], onDelete: Restrict)
  createdAt DateTime @default(now()) @db.Timestamptz(3)
  project Project @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Restrict)
  assets Asset[]
@@ -213,4 +224,27 @@ model Session {
  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
  @@index([userId, expiresAt])
  @@index([workspaceId])
+}
+
+model ShareLink {
+ id String @id @default(uuid()) @db.Uuid
+ workspaceId String @db.Uuid
+ projectId String @db.Uuid
+ tokenHash String @unique @db.Char(64)
+ expiresAt DateTime @db.Timestamptz(3)
+ revokedAt DateTime? @db.Timestamptz(3)
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ project Project @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Restrict)
+ sessions GuestSession[]
+ @@index([workspaceId, projectId, id])
+}
+model GuestSession {
+ id String @id @default(uuid()) @db.Uuid
+ shareId String @db.Uuid
+ tokenHash String @unique @db.Char(64)
+ expiresAt DateTime @db.Timestamptz(3)
+ revokedAt DateTime? @db.Timestamptz(3)
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ share ShareLink @relation(fields: [shareId], references: [id], onDelete: Restrict)
+ @@index([shareId, expiresAt])
 }

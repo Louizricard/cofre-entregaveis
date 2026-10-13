@@ -94,7 +94,7 @@ Compila os pacotes e inicia em http://localhost:3000/api/v1, ouvindo apenas loop
 ```sh
 cd apps/flutter_app
 flutter pub get --enforce-lockfile
-flutter run -d chrome --web-hostname localhost --web-port 8080 --dart-define=API_ORIGIN=http://localhost:3000
+flutter run --no-web-resources-cdn -d chrome --web-hostname localhost --web-port 8080 --dart-define=API_ORIGIN=http://localhost:3000
 ```
 
 Use **localhost** em ambos os serviços, sem misturar 127.0.0.1. A API permite CORS somente para `APP_ORIGIN`, com credentials explícitas no BrowserClient. A interface é pt-BR e contém cadastro, login, splash com recuperação de erro e dashboard de clientes/projetos. Ao recarregar, chama `/auth/me`; 401 volta ao login.
@@ -154,7 +154,7 @@ Defina `NODE_ENV=production`, `APP_ORIGIN=https://seu-dominio` e credenciais rea
 
 ```sh
 cd apps/flutter_app
-flutter build web --release
+flutter build web --release --no-web-resources-cdn
 ```
 
 O servidor estático deve servir `index.html` nas rotas do app. O roteador usa a estratégia hash padrão, sem exigir URLs limpas. Configure TLS e headers de segurança no ingress. A API ouve loopback; o exemplo presume proxy no mesmo host. Não foram feitos deploy, configuração de domínio ou publicação.
@@ -186,7 +186,7 @@ pnpm contracts:check
 cd apps/flutter_app
 flutter analyze
 flutter test
-flutter build web --release
+flutter build web --release --no-web-resources-cdn
 ```
 
 Os testes de API sem banco exercitam tokens, cookies, CSRF/Origin, Argon2id, DTOs, health e rejeição de acesso anônimo. Eles **não substituem** os testes de persistência.
@@ -236,6 +236,10 @@ docs/              decisões, fontes e estado dos checks
 
 ## Prévias privadas para o criador
 
+Versões prontas podem ser publicadas por **Publicar versão**, com confirmação. A publicação preserva arquivos e vínculo manual; mudanças exigem nova versão. Uma publicação mais recente mantém a anterior no histórico. Regras e execução em [docs/publicacao-versoes.md](docs/publicacao-versoes.md).
+
+**Compartilhar prévias** cria link secreto com validade e revogação. O portal convidado mostra versões publicadas e derivados privados, sem rascunhos ou download de originais. O link só é exibido ao criar; guarde-o. No ambiente local, teste em uma guia anônima do mesmo PC. Use `--no-web-resources-cdn` para servir recursos Flutter localmente. Guia: [docs/portal-previas.md](docs/portal-previas.md). Identidade, comentários, aprovação e pagamentos são etapas posteriores.
+
 PNG/JPEG/WebP e PDF têm derivados JPEG separados, com marca d’água nos pixels. MP4 recebe trecho de até 60 s em 720p com marca; MP3/WAV recebem trecho AAC de até 60 s. A interface oferece **Ver prévia**, páginas, reprodutor Web e retry; não usa original como fallback. Worker Node separado com fila persistente no PostgreSQL, reserva de cota e limpeza após falhas. Configure `MEDIA_PYTHON`, `MEDIA_FFMPEG` e `MEDIA_FFPROBE` e execute `pnpm media:worker`; detalhes e limites em [docs/previas-desenvolvimento.md](docs/previas-desenvolvimento.md).
 
-O teste direto no R2 real passou para PNG/PDF/MP4/MP3/WAV; o responsável confirmou PDF e reprodução de vídeo/áudio no navegador em 13/10/2026. ZIP pode usar uma imagem/PDF da mesma versão via **Escolher prévia manual**, sem extrair o original ou duplicar cota; o vínculo/remoção passou no R2 real e a interface aguarda conferência manual. Análise de segurança com ClamAV e isolamento Windows AppContainer estão implementados: downloads e prévias aguardam uma análise CLEAN vigente. Configure também `CLAMAV_SCAN` e `CLAMAV_DATABASE`, atualize as assinaturas com `pnpm security:update` e consulte [docs/seguranca-arquivos.md](docs/seguranca-arquivos.md). Portal de convidados, publicação e aprovação continuam pendentes.
+O teste direto no R2 real passou para PNG/PDF/MP4/MP3/WAV; o responsável confirmou PDF e reprodução de vídeo/áudio no navegador em 13/10/2026. ZIP pode usar uma imagem/PDF da mesma versão via **Escolher prévia manual**, sem extrair o original ou duplicar cota; o vínculo/remoção passou no R2 real e a interface aguarda conferência manual. Análise de segurança com ClamAV e isolamento Windows AppContainer estão implementados: downloads e prévias aguardam uma análise CLEAN vigente. Configure também `CLAMAV_SCAN` e `CLAMAV_DATABASE`, atualize as assinaturas com `pnpm security:update` e consulte [docs/seguranca-arquivos.md](docs/seguranca-arquivos.md). Portal de prévias está implementado; identidade, colaboração e aprovação continuam pendentes.

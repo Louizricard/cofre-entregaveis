@@ -1,6 +1,6 @@
 # Cofre de Entregáveis — PRD técnico e primeiro marco
 
-Versão 1.7 · 13 de outubro de 2026 · Prévia manual de ZIP implementada; conferência manual da associação pendente
+Versão 1.10 · 13 de outubro de 2026 · Publicação e portal convidado de prévias implementados; identidade e colaboração são as próximas partes
 
 ## 1. Objetivo e decisões
 
@@ -326,3 +326,5 @@ Prisma, NestJS e plugins Flutter terão versões e sintaxe verificadas na implem
 - 13/10/2026 — v1.6: visualizador PDF confirmado pelo responsável. Prévia temporal de MP4/MP3/WAV implementada com FFmpeg, trecho até 60 s e marca no vídeo. Testes automatizados e HTTP/R2 reais passaram; reprodução no navegador confirmada pelo responsável. Prévia manual de ZIP, malware, sandbox completa e portal continuam pendentes.
 - 13/10/2026 — v1.7: ZIP pode usar imagem/PDF validado da mesma versão como fonte de prévia manual, exibindo apenas derivados marcados. Vínculo, substituição e remoção testados; HTTP/R2 real passou e interface aguarda conferência manual. Malware, sandbox completa e portal continuam pendentes.
 - 13/10/2026 — v1.8: análise ClamAV obrigatória antes de download/processamento e isolamento Windows AppContainer implementados. CLEAN tem validade de 24 h; base diária até 72 h; erro/rejeição bloqueiam liberação. Hash, lease, tentativas limitadas e recuperação persistidos. Interface oferece estados e retry de erro. Outros sistemas precisam de adaptador próprio; portal, publicação e aprovação continuam pendentes. Guia: docs/seguranca-arquivos.md.
+- 13/10/2026 — v1.9: publicação DRAFT → PUBLISHED implementada com revisão esperada, análise vigente e prévias prontas. Nova publicação marca a anterior SUPERSEDED; uma única versão atual por projeto, sem permitir retrocesso. Originais e vínculo manual tornam-se imutáveis; autor/horário registrados. Criar rascunho preserva versão atual. Compartilhamento convidado, identidade, comentários e aprovação continuam pendentes. Guia: docs/publicacao-versoes.md.
+- 13/10/2026 — v1.10: links opacos com hash, expiração/revogação e sessão convidada limitada implementados. Portal mostra versão atual/histórico publicados e somente prévias privadas, com análise de segurança vigente. Rascunhos e originais protegidos; troca de token remove segredo da rota/histórico antes do bootstrap. Publicação confirmada manualmente pelo responsável; portal e revogação confirmados manualmente pelo responsável. Identidade por e-mail, comentários, rodadas, aprovação e pagamento continuam pendentes. Guia: docs/portal-previas.md.

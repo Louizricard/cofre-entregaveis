@@ -67,6 +67,25 @@ class FakeFiles implements FilesRepository {
     );
   }
 
+  bool failPublish = false;
+  @override
+  Future<VersionView> publish(String versionId, int revision) async {
+    if (failPublish) throw Exception('publish failed');
+    for (var i = 0; i < items.length; i++) {
+      final v = items[i];
+      items[i] = VersionView.fromJson({
+        ...v.toJson(),
+        'projectRevision': revision + 1,
+        'state': v.id == versionId
+            ? 'PUBLISHED'
+            : v.state == 'PUBLISHED'
+            ? 'SUPERSEDED'
+            : v.state,
+      });
+    }
+    return items.firstWhere((v) => v.id == versionId);
+  }
+
   bool enabled;
   bool failComplete = false;
   final items = <VersionView>[];
@@ -92,6 +111,7 @@ class FakeFiles implements FilesRepository {
   @override
   Future<VersionView> createVersion(String projectId) async {
     final v = VersionView(
+      projectRevision: items.length,
       id: 'v-${items.length}',
       number: items.length + 1,
       state: 'DRAFT',
@@ -105,6 +125,7 @@ class FakeFiles implements FilesRepository {
   void update(AssetView asset) {
     final v = items.last;
     items[items.length - 1] = VersionView(
+      projectRevision: v.projectRevision,
       id: v.id,
       number: v.number,
       state: v.state,

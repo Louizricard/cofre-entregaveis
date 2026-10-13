@@ -113,7 +113,7 @@ Em 12/10/2026, o responsável ativou o R2. O agente criou o bucket Standard priv
 
 ## Próximo trabalho de produto
 
-Conferir manualmente a prévia de ZIP e os estados da análise de segurança no aplicativo. Depois, implementar o portal de revisão/aprovação com autorização própria e publicação de versões. Pagamentos continuam em marco posterior.
+Publicação foi confirmada manualmente pelo responsável. Portal de prévias e revogação confirmados manualmente pelo responsável. Compartilhamento está implementado; a próxima parte é identidade confirmada por e-mail antes de comentários, rodadas de revisão e aprovação. Pagamentos seguem em marco posterior.
 
 ## Marco de prévias, parte 1 — imagens e PDF (13/10/2026)
 
@@ -166,3 +166,33 @@ Checks: lint, typecheck, Prisma validate, contratos e build API passaram; 9 unit
 Validação real HTTP/R2 em dois workspaces sintéticos: PNG, PDF, ZIP, MP4, MP3 e WAV ficaram bloqueados antes da análise e depois receberam CLEAN do ClamAV oficial. Python/FFmpeg produziram derivados no AppContainer; MIME/CORS, Range de áudio/vídeo e acesso sem assinatura negado passaram. Originais idênticos por SHA-256; ZIP compartilhou somente o derivado marcado do PDF sem duplicar cota, e remoção bloqueou nova URL. Reservas zeradas, projetos sintéticos arquivados e sessões de teste encerradas. Nenhuma credencial/cookie/URL assinada registrada.
 
 Guia operacional e limites: [seguranca-arquivos.md](seguranca-arquivos.md). Conferência manual pelo responsável dos estados de segurança e da prévia manual de ZIP ainda pendente. Entrega de prévia manual e segurança na branch codex/previa-manual-zip, baseada em codex/previas-video-audio (PR #3). Envio ao GitHub autorizado pelo responsável; revisão/merge seguem o fluxo de PR.
+
+
+## Marco do portal, parte 1 — publicação de versões (13/10/2026)
+
+- Publicação autenticada com expectedProjectRevision, isolamento por workspace, origem/CSRF e transação Serializable. Versão precisa de ao menos um original READY, nenhum envio ativo, análises CLEAN vigentes e prévias automáticas prontas. ZIP pode ficar sem prévia manual; registros cancelados/falhos não integram a entrega.
+- Versão recebe PUBLISHED, autor e horário. Publicação mais recente marca a anterior SUPERSEDED sem apagar arquivos; criar rascunho não altera a versão atual. Índice parcial garante uma única PUBLISHED por projeto; rascunho anterior à atual não pode ser publicado.
+- Publicada/histórica recusa upload e alteração/remoção do vínculo manual. Reanálise de segurança e regeneração de derivados continuam possíveis; originais e vínculo são preservados. Expiração/rejeição de segurança continua bloqueando URLs.
+- Flutter oferece Publicar versão com confirmação, estados Publicada/Histórico e orientação para nova versão. Projeto desatualizado exige atualizar antes de publicar. Nenhum link convidado, aprovação ou download de cliente foi habilitado nesta parte.
+- Migration incremental version_publication aplicada em schemas isolados e no desenvolvimento; versões anteriores conservadas como DRAFT. Branch local codex/publicacao-versoes, baseada na main após merges #4/#3/#2. Entrega incluída junto ao compartilhamento nesta branch.
+
+Checks: lint, typecheck, Prisma generate/validate, build API e contratos passaram; 9 unitários API; 49 testes de integração reportados (44 cenários + 5 pais), com schemas separados; 35 testes Flutter, analyze e build Web release passaram. Casos novos cobrem autorização/CSRF, estados de arquivo/análise/prévia, revisão antiga, publicação concorrente, imutabilidade, histórico/retrocesso e arquivamento. Flutter verifica confirmação em 360/768/1440 px, cancelamento e falha preservando rascunho. Parsers não foram alterados; os 18 testes reais da etapa anterior permanecem como evidência dessa parte.
+
+Teste real HTTP/R2 em workspace sintético: PNG/PDF/ZIP enviados, analisados e com prévias privadas verificadas; publicação retornou PUBLISHED, novo upload na versão retornou 409 e criar outro DRAFT manteve a versão atual publicada. Originais preservados, reserva zerada, projeto sintético arquivado e sessão encerrada. API, worker e interface atualizados em execução local.
+
+Guia: [publicacao-versoes.md](publicacao-versoes.md). Publicação confirmada manualmente pelo responsável. O portal convidado foi acrescentado na parte seguinte, com sessão limitada e sem liberação de originais antes dos marcos de aprovação/pagamento.
+
+
+## Marco do portal, parte 2 — compartilhamento e leitura de prévias (13/10/2026)
+
+- ShareLink com token de 256 bits exibido uma vez, somente SHA-256 persistido, validade entre 5 minutos e 30 dias e até dez links ativos por projeto. UI oferece 1/7/30 dias, cópia e revogação; listagem paginada nunca recupera o segredo. Criação requer projeto ativo com versão publicada.
+- GuestSession com cookie HttpOnly próprio, separado do criador; oito horas ou vencimento do link, rotação/encerramento e hashes persistidos. Bootstrap tem origem/CSRF/JSON e rate limit dez/minuto; mil sessões vigentes por link. Consultas revalidam vínculo, expiração, revogação e projeto ativo. Revogação invalida sessões relacionadas; assinatura de prévia tem conferência posterior antes da resposta.
+- Portal Flutter acessível sem conta de criador, com saldo informado, versão atual/histórico publicado paginado e prévias de derivados; nenhum rascunho, chave original, e-mail privado ou download original exposto. Cookie convidado não autoriza endpoints do criador. Publicar atualiza o portal; rascunho não muda a entrega atual.
+- Link usa fragmento /#/s/:token; Router.neglect troca rota/histórico por /portal antes do bootstrap, com ticket em memória consumido uma vez e nenhum extra/storage com segredo. Referrer no-referrer na página/API; logs sem caminhos ou corpos. Recursos Flutter locais via --no-web-resources-cdn em execução/build. Sessão convidada anterior é encerrada ao abrir outro link.
+- Migration incremental guest_preview_portal aplicada nos schemas de testes e no desenvolvimento. Compartilhamento não afirma identidade e não habilita comentários, aprovação, pagamentos ou originais. Publicação da parte anterior foi confirmada pelo responsável antes desta etapa.
+
+Checks: lint, typecheck, Prisma generate/validate, build API e contratos passaram; 9 unitários API e 64 testes de integração reportados (58 cenários + 6 pais), com schemas isolados. Casos incluem projeto distinto no mesmo workspace, rascunhos, rotação/expiração de sessão, revogação durante assinatura, limite concorrente de links, arquivamento e rate limit. Flutter: 44 testes, analyze e build Web release sem CDN passaram; casos novos conferem link exibido uma vez, clipboard, revogação, rota/histórico sem segredo antes do bootstrap, prévia sem privilégio de reprocessar e histórico/encerramento em 360/768/1440 px. Parsers não foram alterados nesta parte.
+
+Teste real HTTP/R2 em workspace sintético: PNG/PDF/ZIP enviados e analisados; ZIP recebeu vínculo manual de PDF antes da publicação. Sessão convidada recebeu somente metadados seguros e JPEGs privados dos três arquivos. Rascunho novo retornou 404, tentativa de download original retornou 401, R2 sem assinatura negou acesso e revogação bloqueou consulta/bootstrap. Sessão do criador preservada, reserva zerada, projeto sintético arquivado e sessão encerrada. API/worker/Flutter atualizados em execução; banco isolado de testes encerrado.
+
+Guia: [portal-previas.md](portal-previas.md). O responsável confirmou que o portal e os testes manuais orientados funcionaram corretamente. Branch local codex/publicacao-versoes inclui publicação e compartilhamento, com envio ao GitHub autorizado pelo responsável. Próximo trabalho: identidade por código de e-mail antes da colaboração; preparar envio transacional de e-mail sem registrar códigos em claro.
