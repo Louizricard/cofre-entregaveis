@@ -1,12 +1,12 @@
 # Prévias privadas de imagem e PDF
 
-Esta parte entrega prévias para conferência do criador autenticado, incluindo imagem/PDF e agora vídeo/áudio. Não implementa portal convidado, publicação, aprovação, prévia manual de ZIP ou verificação de malware. F04 do PRD ainda não está completo.
+Esta parte entrega prévias para conferência do criador autenticado, incluindo imagem/PDF, vídeo/áudio e vínculo manual para ZIP. Não implementa portal convidado, publicação ou aprovação. A execução atual exige análise de malware e AppContainer Windows, descritos em [seguranca-arquivos.md](seguranca-arquivos.md).
 
 ## Executar
 
 1. Aplique as migrations com `pnpm db:migrate` e mantenha a configuração R2 privada descrita em [r2-desenvolvimento.md](r2-desenvolvimento.md).
 2. Use Python 3.12+ com as versões de `apps/media_worker/requirements.txt`. Em um ambiente virtual dedicado: `python -m pip install -r apps/media_worker/requirements.txt`.
-3. Defina `MEDIA_PYTHON` no `.env` com o caminho absoluto do executável desse ambiente. No segundo PC, o runtime Python já disponível foi configurado localmente; esse caminho não é versionado.
+3. Defina `MEDIA_PYTHON` no `.env` com o caminho absoluto do executável desse ambiente. No segundo PC, há runtime dedicado em .tools, sem dados pessoais; esse caminho não é versionado. Configure também ClamAV/base e execute `pnpm security:update` conforme o guia de segurança.
 4. Inicie a API, o Flutter e, em outro terminal, `pnpm media:worker`. O worker é um processo Node separado. A API continua aceitando uploads quando ele está desligado; os jobs aguardam no banco.
 5. No projeto ativo, envie PNG/JPEG/WebP ou PDF e clique em **Ver prévia**. A janela consulta o processamento, mostra páginas de derivados e permite atualizar URLs expiradas ou reprocessar uma falha definitiva. Não exibe o original como fallback.
 
@@ -27,7 +27,7 @@ PNG/JPEG/WebP estáticos: até 40 milhões de pixels, máximo 1600 × 1600 na sa
 
 O parser recebe somente caminhos temporários e MIME permitido, sem nomes do usuário em comandos de shell. Seu ambiente não contém credenciais PostgreSQL/R2. Windows Job Objects aplicam 768 MiB, 90 segundos de CPU e um processo; Linux usa rlimits de memória/CPU/tamanho de arquivo. Ausência de suporte aos limites causa falha, sem executar o parser sem contenção. O processo pai aplica timeout e só prossegue após o subprocesso fechar.
 
-Esses mecanismos contêm recursos; **não são sandbox completa de acesso a arquivos/rede**. Não há varredura antivírus nesta parte. Antes de aceitar arquivos externos ou abrir um portal de convidados, definir isolamento de identidade/filesystem/rede do worker e implementar análise de malware com política de falha fechada. Nenhuma saída desta parte deve ser tratada como aprovação de segurança do original.
+Esses limites foram complementados por AppContainer e análise ClamAV com bloqueio em caso de falha. Consulte [seguranca-arquivos.md](seguranca-arquivos.md) para permissões, estados e recuperação. O launcher atual exige Windows; os rlimits anteriores não habilitam execução em outros sistemas. Nenhuma saída equivale a aprovação de segurança absoluta do original.
 
 Referências: [limites de Job Objects](https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_basic_limit_information), [Job Objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects), [API do PDFium Python](https://pypdfium2.readthedocs.io/en/stable/python_api.html).
 
@@ -37,13 +37,25 @@ Instale FFmpeg/FFprobe para seu sistema a partir das opções indicadas no [site
 
 MP4 de até 30 min produz um trecho inicial de até 60 s em H.264/AAC 720p com marca nos pixels. MP3/WAV de até 30 min produzem trecho de até 60 s em M4A AAC 96 kbps. Áudio não recebe marca visual; a proteção desta prévia é a compressão e o limite de trecho. A saída é sempre derivada, sem fallback para original. O alvo de 59,9 s evita ultrapassar 60 s por arredondamento do codec.
 
-O subprocesso FFmpeg participa do mesmo Job Object do Python no Windows: até 2 processos, 768 MiB agregados, 90 s de CPU no job, sem possibilidade de criar outros descendentes. Linux mantém rlimits herdados por processo. FFprobe tem timeout de 15 s, FFmpeg de 120 s e o parser inteiro de 180 s; o ciclo continua limitado a 5 min. Demuxers são fixos, somente file é permitido e referências externas mov são desativadas. Esses cuidados não equivalem à sandbox completa de acesso a arquivos/rede exigida antes do portal.
+O subprocesso FFmpeg participa do mesmo Job Object do Python no Windows: até 2 processos, 768 MiB agregados, 90 s de CPU no job, sem possibilidade de criar outros descendentes. Linux mantém rlimits herdados por processo. FFprobe tem timeout de 15 s, FFmpeg de 120 s e o parser inteiro de 180 s; o ciclo continua limitado a 5 min. Demuxers são fixos, somente file é permitido e referências externas mov são desativadas. O launcher atual executa Python e FFmpeg no mesmo AppContainer, sem capabilities de rede, conforme o guia de segurança.
 
 No navegador, Ver prévia exibe player com controles nativos e sem autoplay; clique em reproduzir. O player é interrompido ao fechar ou atualizar. Novas requisições Range após expirar a URL de 60 s podem falhar; Atualizar renova a URL e reinicia a reprodução. Native desktop/mobile ainda não têm reprodutor validado.
 
 Para executar os 10 testes Python, forneça MEDIA_FFMPEG e MEDIA_FFPROBE ao processo e rode `python apps/media_worker/test_render.py`. Sem essas variáveis os 5 testes temporais são marcados como skip, não comprovando suporte a vídeo/áudio. Na execução validada deste PC não houve skips.
 
 Validação temporal: MP4/MP3/WAV sintéticos passaram por API → worker → R2 real com CORS/Range/privacidade e SHA-256 dos originais; vídeo inspecionado com marca, 1280 × 720 H.264/AAC. PostgreSQL, API e widgets passaram nos testes descritos em progress.md. O responsável confirmou o player no navegador em 13/10/2026.
+
+## Prévia manual de ZIP/editáveis
+
+Envie o editável empacotado em ZIP e uma imagem estática ou PDF que o represente, ambos na mesma versão. No cartão do ZIP, clique em **Escolher prévia manual**, selecione a fonte e confirme **Vincular prévia**. Depois use **Ver prévia** no ZIP. A fila processa a fonte normalmente; até terminar, o ZIP mostra o estado da geração. Falhas e reprocessamento usam o job da fonte, nunca o ZIP.
+
+O seletor não envia um novo arquivo por si: escolha um arquivo já enviado nesta versão. Sem opções, feche a janela, use Enviar arquivo para a imagem/PDF e abra o seletor de novo. A fonte continua como arquivo normal da versão; esta associação serve ao fluxo atual de conferência do criador, sem acesso de convidados.
+
+Para substituir, selecione outra fonte pelo mesmo botão. **Remover prévia manual** desfaz somente a associação; os arquivos e derivados permanecem disponíveis ao criador, e a cota não diminui. Associar não duplica armazenamento. Fontes de outra versão/conta, uploads incompletos, ZIP como fonte e projetos arquivados são recusados. FKs compostas também impedem vínculo externo no banco.
+
+API: POST /assets/:id/manual-preview com previewAssetId; DELETE no mesmo caminho com JSON vazio. Ambas exigem sessão/Origin/CSRF. Consulta de estado, URL de página e retry continuam nos endpoints de prévia existentes. Não há fallback para o original ao falhar/remover. Uma URL anterior à remoção pode continuar funcionando até sua expiração de 60 s.
+
+Validação desta parte: 36 testes de integração reportados (32 cenários + 4 pais), 9 unitários API e 27 Flutter, analyze/build/contratos/Prisma/lint passaram. Teste HTTP/worker/R2 com ZIP/PDF sintéticos confirmou compartilhamento do mesmo derivado, preservação do ZIP, ausência de cota duplicada e bloqueio de nova URL após remoção. Conferência manual da nova interface ainda pendente.
 
 ## Validação em 13/10/2026
 

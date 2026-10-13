@@ -84,14 +84,22 @@ class _PreviewDialogState extends ConsumerState<PreviewDialog> {
             if (_loading) const LinearProgressIndicator(),
             if (_error != null) Text(_error!),
             if (_status?.state == 'PENDING')
-              const Text('Prévia na fila de processamento.'),
+              Text(
+                _status?.failureCode == 'SECURITY_SCAN_REQUIRED'
+                    ? 'Aguarde a análise de segurança antes de visualizar.'
+                    : 'Prévia na fila de processamento.',
+              ),
             if (_status?.state == 'RUNNING')
               Text(
                 _status?.failureCode == null ? 'Preparando prévia. Aguarde…' : 'A geração falhou. Aguardando limpeza para tentar novamente.',
               ),
             if (_status?.state == 'FAILED')
               Text(
-                _status?.failureCode == 'PREVIEW_QUOTA'
+                _status?.failureCode == 'SECURITY_REJECTED'
+                    ? 'Arquivo bloqueado pela análise de segurança.'
+                    : _status?.failureCode == 'SECURITY_SCAN_ERROR'
+                    ? 'A análise de segurança falhou. Feche esta janela e repita a análise no arquivo.'
+                    : _status?.failureCode == 'PREVIEW_QUOTA'
                     ? 'Não há espaço disponível para gerar esta prévia.'
                     : 'Não foi possível gerar a prévia. Você pode tentar novamente.',
               ),
@@ -149,7 +157,8 @@ class _PreviewDialogState extends ConsumerState<PreviewDialog> {
       ),
     ),
     actions: [
-      if (_status?.state == 'FAILED')
+      if (_status?.state == 'FAILED' &&
+          !(_status?.failureCode?.startsWith('SECURITY') ?? false))
         TextButton(
           onPressed: _loading ? null : () => _load(retry: true),
           child: const Text('Reprocessar prévia'),

@@ -64,10 +64,11 @@ def limit_resources(children=False):
 def tool(executable, args, timeout, capture=False):
     if not executable or not Path(executable).is_absolute() or not Path(executable).is_file():
         raise ValueError('MEDIA_TOOL_UNAVAILABLE')
-    result = subprocess.run([executable, *args], shell=False, stdin=subprocess.DEVNULL,
-                            stdout=subprocess.PIPE if capture else subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    # Anonymous pipes work in AppContainer without granting access to the NUL device.
+    result = subprocess.run([executable, *args], shell=False, input=b'',
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                             timeout=timeout, creationflags=0x08000000 if os.name == 'nt' else 0)
-    if result.returncode != 0 or (capture and len(result.stdout) > 32768):
+    if result.returncode != 0 or len(result.stdout) > 32768:
         raise ValueError('MEDIA_TOOL_FAILED')
     return result.stdout
 

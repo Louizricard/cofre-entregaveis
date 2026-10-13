@@ -1,4 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsUUID } from 'class-validator';
+export class ManualPreviewDto {
+ @ApiProperty({ format: 'uuid' }) @IsUUID() previewAssetId!: string;
+}
 export class PreviewStateView {
  @ApiProperty({ enum: ['PENDING', 'RUNNING', 'READY', 'FAILED', 'UNSUPPORTED'] }) state!: string;
  @ApiProperty({ type: String, nullable: true }) failureCode!: string | null;

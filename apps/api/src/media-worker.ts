@@ -8,6 +8,7 @@ import { serial } from './transactions.js';
 import { QUOTA_MAX } from './file-types.js';
 import type { ObjectStorage } from './storage.js';
 import { previewProfile, previewSupported, temporalSupported } from './media.service.js';
+import { parserEnvironment, sha256, SCAN_VALID_MS } from './security-worker.js';
 export const PREVIEW_BUDGET = 32n * 1024n * 1024n;
 type Page = { file: string; width: number; height: number; size: number; kind?: string; mime?: string; durationMs?: number };
 export interface Renderer { render(source: string, mime: string, output: string, signal: AbortSignal): Promise<Page[]> }
@@ -15,8 +16,7 @@ export class PythonRenderer implements Renderer {
  constructor(private readonly python: string, private readonly script: string, private readonly ffmpeg = '', private readonly ffprobe = '') {}
  async render(source: string, mime: string, output: string, signal: AbortSignal) {
   // Credentials are deliberately absent from the parser's environment.
-  const env: NodeJS.ProcessEnv = { SYSTEMROOT: process.env.SYSTEMROOT, WINDIR: process.env.WINDIR,
-   TEMP: output, TMP: output, PATH: resolve(this.python, '..'), PYTHONUTF8: '1', MEDIA_FFMPEG: this.ffmpeg, MEDIA_FFPROBE: this.ffprobe };
+  const env: NodeJS.ProcessEnv = { ...parserEnvironment(output), PATH: resolve(this.python, '..'), MEDIA_FFMPEG: this.ffmpeg, MEDIA_FFPROBE: this.ffprobe };
   await new Promise<void>((done, fail) => {
    let error: Error | undefined;
    const child = spawn(this.python, ['-I', this.script, source, mime, output], {
@@ -52,7 +52,7 @@ export class MediaWorker {
  async claim() {
   return serial(this.db, async tx => {
    const job = await tx.mediaJob.findFirst({ where: { state: 'PENDING', retryAt: { lte: new Date() },
-    asset: { status: 'READY', version: { project: { status: 'ACTIVE' } } } }, orderBy: { createdAt: 'asc' }, include: { asset: true } });
+    asset: { status: 'READY', scanStatus: 'CLEAN', scannedAt: { gt: new Date(Date.now() - SCAN_VALID_MS) }, version: { project: { status: 'ACTIVE' } } } }, orderBy: { createdAt: 'asc' }, include: { asset: true } });
    if (!job) return null;
    const w = await tx.workspace.findUniqueOrThrow({ where: { id: job.asset.workspaceId } });
    if (w.storageUsedBytes + w.storageReservedBytes + PREVIEW_BUDGET > QUOTA_MAX) {
@@ -113,6 +113,11 @@ export class MediaWorker {
    const input = join(folder, 'input'); const output = join(folder, 'output');
    await mkdir(output);
    await this.store.readToFile(job.asset.objectKey, input, Number(job.asset.sizeBytes), signal);
+   if (await sha256(input) !== job.asset.scanSha256) {
+    await this.db.asset.updateMany({ where: { id: job.asset.id, scanStatus: 'CLEAN', scanSha256: job.asset.scanSha256 }, data: {
+     scanStatus: 'PENDING', scannedAt: null, scanSha256: null, scanAttempts: 0, scanRetryAt: new Date() } });
+    throw new Error('SCANNED_CONTENT_CHANGED');
+   }
    const pages = await this.renderer.render(input, job.asset.mime, output, signal);
    const keys = pages.map(p => `previews/${job.asset.workspaceId}/${job.id}/${run.id}/${p.file}`);
    // Durable output manifest BEFORE any external write: recovery knows exactly what to remove.

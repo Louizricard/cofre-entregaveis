@@ -8,13 +8,15 @@ import { extensions, FILE_MAX, matchesSignature, PART_SIZE, QUOTA_MAX, validDecl
 import type { AssetView, CompleteUploadDto, StartUploadDto } from './files.dto.js';
 import type { ListQuery } from './projects.dto.js';
 import { previewSupported, previewProfile } from './media.service.js';
+import { cleanScan } from './security-worker.js';
 
 export const MAINTENANCE = Symbol('MAINTENANCE');
 const activeStates = ['INITIATING', 'UPLOADING', 'COMPLETING', 'VALIDATING'] as const;
 const assetInclude = { version: { include: { project: true } } } as const;
 type Asset = Prisma.AssetGetPayload<{ include: typeof assetInclude }>;
-function view(a: { id: string; fileName: string; mime: string; sizeBytes: bigint; status: string; failureCode: string | null; expiresAt: Date }): AssetView {
- return { id: a.id, fileName: a.fileName, mime: a.mime, sizeBytes: a.sizeBytes.toString(), status: a.status, failureCode: a.failureCode, expiresAt: a.expiresAt };
+function view(a: { id: string; fileName: string; mime: string; sizeBytes: bigint; status: string; failureCode: string | null; expiresAt: Date; scanStatus: string; scannedAt: Date | null }): AssetView {
+ return { id: a.id, fileName: a.fileName, mime: a.mime, sizeBytes: a.sizeBytes.toString(), status: a.status, failureCode: a.failureCode, expiresAt: a.expiresAt,
+  scanStatus: a.scanStatus === 'CLEAN' && !cleanScan(a) ? 'PENDING' : a.scanStatus };
 }
 const conflict = (code: string, message: string) => new ConflictException({ code, message });
 const missing = () => new NotFoundException({ code: 'NOT_FOUND', message: 'Registro não encontrado.' });
@@ -225,6 +227,7 @@ export class FilesService implements OnModuleInit, OnModuleDestroy {
  async download(workspaceId: string, id: string) {
   const store = this.store(); const a: Asset = await this.get(workspaceId, id);
   if (a.status !== 'READY' || a.version.project.status !== 'ACTIVE') throw conflict('DOWNLOAD_NOT_AVAILABLE', 'O arquivo não está disponível para download.');
+  if (!cleanScan(a)) throw conflict('SECURITY_SCAN_REQUIRED', 'O arquivo aguarda uma análise de segurança válida ou foi bloqueado.');
   try { return { url: await store.download(a.objectKey, a.fileName), expiresAt: new Date(Date.now() + 60000) }; }
   catch { throw unavailable(); }
  }

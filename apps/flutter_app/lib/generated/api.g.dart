@@ -294,6 +294,17 @@ class PreviewStateView {
   };
 }
 
+class ManualPreviewDto {
+  final String previewAssetId;
+  const ManualPreviewDto({required this.previewAssetId});
+  factory ManualPreviewDto.fromJson(Map<String, dynamic> json) => ManualPreviewDto(
+    previewAssetId: json['previewAssetId'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'previewAssetId': previewAssetId,
+  };
+}
+
 class PreviewPageDto {
   final int page;
   static const pageMinimum = 1;
@@ -369,6 +380,7 @@ class StorageView {
 }
 
 class AssetView {
+  final String scanStatus;
   final String id;
   final String fileName;
   final String mime;
@@ -376,8 +388,9 @@ class AssetView {
   final String status;
   final String? failureCode;
   final String expiresAt;
-  const AssetView({required this.id, required this.fileName, required this.mime, required this.sizeBytes, required this.status, required this.failureCode, required this.expiresAt});
+  const AssetView({required this.scanStatus, required this.id, required this.fileName, required this.mime, required this.sizeBytes, required this.status, required this.failureCode, required this.expiresAt});
   factory AssetView.fromJson(Map<String, dynamic> json) => AssetView(
+    scanStatus: json['scanStatus'] as String,
     id: json['id'] as String,
     fileName: json['fileName'] as String,
     mime: json['mime'] as String,
@@ -387,6 +400,7 @@ class AssetView {
     expiresAt: json['expiresAt'] as String,
   );
   Map<String, dynamic> toJson() => {
+    'scanStatus': scanStatus,
     'id': id,
     'fileName': fileName,
     'mime': mime,
@@ -633,6 +647,21 @@ class CofreClient {
     final path = '/api/v1/ready';
     final json = await transport('GET', path, null);
     return HealthView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<PreviewStateView> filesscanRetry(EmptyDto body, String id) async {
+    final path = '/api/v1/assets/${Uri.encodeComponent(id.toString())}/scan-retry';
+    final json = await transport('POST', path, body.toJson());
+    return PreviewStateView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<PreviewStateView> filesmanualPreview(ManualPreviewDto body, String id) async {
+    final path = '/api/v1/assets/${Uri.encodeComponent(id.toString())}/manual-preview';
+    final json = await transport('POST', path, body.toJson());
+    return PreviewStateView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<PreviewStateView> filesremoveManualPreview(EmptyDto body, String id) async {
+    final path = '/api/v1/assets/${Uri.encodeComponent(id.toString())}/manual-preview';
+    final json = await transport('DELETE', path, body.toJson());
+    return PreviewStateView.fromJson(json as Map<String, dynamic>);
   }
   Future<PreviewStateView> filespreviewStatus(String id) async {
     final path = '/api/v1/assets/${Uri.encodeComponent(id.toString())}/preview-status';
