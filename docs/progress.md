@@ -113,7 +113,7 @@ Em 12/10/2026, o responsável ativou o R2. O agente criou o bucket Standard priv
 
 ## Próximo trabalho de produto
 
-Completar vídeo/áudio e prévias manuais, isolamento de identidade/filesystem/rede e verificação de malware antes de abrir o portal de revisão/aprovação. Pagamentos continuam em marco posterior.
+Completar prévias manuais de ZIP, isolamento de identidade/filesystem/rede e verificação de malware antes de abrir o portal de revisão/aprovação. Pagamentos continuam em marco posterior.
 
 ## Marco de prévias, parte 1 — imagens e PDF (13/10/2026)
 
@@ -127,3 +127,16 @@ Completar vídeo/áudio e prévias manuais, isolamento de identidade/filesystem/
 Validação: lint, Prisma validate, build/typecheck e contratos passaram; 9 unitários API; 32 testes reportados de integração PostgreSQL (28 cenários + 4 pais, adapters de mídia simulados); 5 testes Python com parsers e limite de memória reais; 22 testes Flutter, analyze e build Web release passaram. Testes isolam um schema por suíte porque o worker consome toda a fila.
 
 Teste real em workspace sintético separado: upload de PNG/PDF → processamento Python → derivado JPEG privado no R2 com CORS → original preservado por SHA-256, reserva zerada, projeto sintético arquivado e sessão encerrada. Marca d’água do JPEG sintético foi inspecionada visualmente. O responsável confirmou o visualizador no navegador em 13/10/2026, com captura mostrando PDF de uma página renderizado com marca d’água. Guia: docs/previas-desenvolvimento.md. F04 completo e acesso de convidados continuam pendentes.
+
+## Marco de prévias, parte 2 — vídeo e áudio (13/10/2026)
+
+- MP4, MP3 e WAV entram na mesma fila PostgreSQL. Jobs temporais usam perfil temporal-v1; registros anteriormente UNSUPPORTED desses formatos são reencaminhados em projetos ativos. JPEG/PDF existentes são preservados.
+- FFprobe verifica duração/streams e FFmpeg gera derivado separado: MP4 H.264/AAC 1280 × 720 com marca nos pixels, ou M4A AAC estéreo 96 kbps. Fonte até 30 minutos; trecho inicial de até 60 segundos (alvo 59,9 s para acomodar arredondamento de codec). Vídeo sem faixa de áudio também funciona.
+- Demuxers fixos por MIME, somente protocolo file e referências externas mov desativadas; nenhum shell construído com entrada do cliente. Windows Job Object abrange Python e um subprocesso, com 768 MiB agregados e 90 s de CPU no job. Timeout do parser e deadline/lease da fila permanecem. Isso não substitui sandbox de identidade/filesystem/rede ou antivírus.
+- Migration incremental acrescenta tipo, MIME e duração aos derivados, com checks no banco. Cota, reserva, limpeza e retry seguem a primeira parte; cada conjunto continua limitado a 32 MiB.
+- API emite URL privada curta com MIME do derivado, nunca do original. Flutter Web usa controles nativos de vídeo/áudio, sem autoplay; fechar/atualizar interrompe o player anterior. URL expirada pode ser renovada em Atualizar.
+- FFmpeg 9.0.2 Essentials foi preparado em .tools (ignorado), com SHA-256 conferido no fornecedor indicado pelo site oficial. Caminhos locais MEDIA_FFMPEG/MEDIA_FFPROBE ficam somente no .env; o código não incorpora binários.
+
+Validação: Prisma generate/validate, lint, build/typecheck e contratos passaram; 9 unitários API; 33 testes de integração reportados (29 cenários + 4 pais, PostgreSQL isolado por suíte); 10 testes Python reais, sem skips; 24 testes Flutter, analyze e build Web release passaram. Casos novos cobrem MP4 sem áudio, áudio longo limitado, MP3, fonte acima de 30 min, playlist disfarçada, tipos de derivados e isolamento A/B.
+
+Teste real em workspace sintético separado: MP4 com áudio, MP3 e WAV → worker/FFmpeg → derivados privados no R2. Conferidos MIME/duração/CORS, Range 206, acesso sem assinatura negado e originais idênticos por SHA-256. Reserva zerada; projeto sintético arquivado e sessão encerrada. Um quadro baixado do vídeo foi inspecionado e confirmou a marca; FFprobe confirmou H.264/AAC 1280 × 720. O responsável confirmou a reprodução no navegador em 13/10/2026. Branch desta parte: codex/previas-video-audio, baseada em feat/clientes-projetos. O PR #2 anterior continua aberto; esta entrega depende dele.

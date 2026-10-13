@@ -7,7 +7,7 @@ const config = settings();
 if (!config.storage || !process.env.MEDIA_PYTHON) throw new Error('Configure R2 e MEDIA_PYTHON para iniciar o worker.');
 const db = createDatabase(config.databaseUrl); const store = new R2Storage(config.storage);
 const worker = new MediaWorker(db, store, new PythonRenderer(process.env.MEDIA_PYTHON,
- fileURLToPath(new URL('../../../media_worker/render.py', import.meta.url))));
+ fileURLToPath(new URL('../../../media_worker/render.py', import.meta.url)), process.env.MEDIA_FFMPEG, process.env.MEDIA_FFPROBE));
 let stopping = false;
 process.once('SIGINT', () => { stopping = true; });
 process.once('SIGTERM', () => { stopping = true; });

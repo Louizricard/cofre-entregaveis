@@ -1,6 +1,6 @@
 # Cofre de Entregáveis — PRD técnico e primeiro marco
 
-Versão 1.5 · 13 de outubro de 2026 · Arquivos privados validados; prévias de imagem/PDF para criador implementadas
+Versão 1.6 · 13 de outubro de 2026 · Prévias privadas de imagem/PDF/vídeo/áudio implementadas; player temporal confirmado pelo responsável
 
 ## 1. Objetivo e decisões
 
@@ -323,3 +323,4 @@ Prisma, NestJS e plugins Flutter terão versões e sintaxe verificadas na implem
 
 - 12/10/2026 — v1.4: versões rascunho, upload multipart privado, cotas e download do criador preparados; testes locais passaram. Bucket/CORS/credenciais e validação com R2 real pendentes. Download de convidados segue condicionado aos marcos de aprovação/pagamento e análise de malware.
 - 13/10/2026 — v1.5: R2 real e upload/download/cancelamento pela interface validados. Primeira parte de prévias implementada: fila PostgreSQL, worker separado, limites de recursos e derivados privados com marca d’água para imagem/PDF. Testes locais e HTTP/R2 reais passaram; conferência manual do visualizador pendente. F04 completo, sandbox de identidade/filesystem/rede, malware e portal convidado continuam pendentes.
+- 13/10/2026 — v1.6: visualizador PDF confirmado pelo responsável. Prévia temporal de MP4/MP3/WAV implementada com FFmpeg, trecho até 60 s e marca no vídeo. Testes automatizados e HTTP/R2 reais passaram; reprodução no navegador confirmada pelo responsável. Prévia manual de ZIP, malware, sandbox completa e portal continuam pendentes.

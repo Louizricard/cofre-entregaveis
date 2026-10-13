@@ -4,7 +4,7 @@ Monorepo com Flutter Web, NestJS/TypeScript e PostgreSQL/Prisma. Cadastro cria c
 
 [PRD](docs/prd.md) · [Progresso](docs/progress.md) · [Ambiente Windows](docs/windows-sem-docker.md) · [Contribuição](CONTRIBUTING.md)
 
-Versões e upload multipart privado foram validados com R2 real. Prévias privadas de imagem/PDF para o criador estão implementadas; o responsável confirmou o visualizador no navegador em 13/10/2026. Vídeo/áudio, malware, portal de cliente, aprovação e pagamentos continuam pendentes. R2 é necessário para enviar arquivos; login, clientes e projetos funcionam sem ele.
+Versões e upload multipart privado foram validados com R2 real. Prévias privadas de imagem/PDF/vídeo/áudio para o criador estão implementadas; o responsável confirmou o visualizador de PDF no navegador em 13/10/2026. O responsável confirmou a reprodução temporal no navegador em 13/10/2026. Malware, portal de cliente, aprovação e pagamentos continuam pendentes. R2 é necessário para enviar arquivos; login, clientes e projetos funcionam sem ele.
 
 ## Pré-requisitos e versões
 
@@ -236,6 +236,6 @@ docs/              decisões, fontes e estado dos checks
 
 ## Prévias privadas para o criador
 
-PNG/JPEG/WebP e PDF têm derivados JPEG separados, com marca d’água nos pixels. A interface oferece **Ver prévia**, navegação de páginas e retry; não usa original como fallback. Worker Node separado com fila persistente no PostgreSQL, reserva de cota e limpeza após falhas. Configure `MEDIA_PYTHON` e execute `pnpm media:worker`; detalhes e limites em [docs/previas-desenvolvimento.md](docs/previas-desenvolvimento.md).
+PNG/JPEG/WebP e PDF têm derivados JPEG separados, com marca d’água nos pixels. MP4 recebe trecho de até 60 s em 720p com marca; MP3/WAV recebem trecho AAC de até 60 s. A interface oferece **Ver prévia**, páginas, reprodutor Web e retry; não usa original como fallback. Worker Node separado com fila persistente no PostgreSQL, reserva de cota e limpeza após falhas. Configure `MEDIA_PYTHON`, `MEDIA_FFMPEG` e `MEDIA_FFPROBE` e execute `pnpm media:worker`; detalhes e limites em [docs/previas-desenvolvimento.md](docs/previas-desenvolvimento.md).
 
-O teste direto no R2 real passou para PNG/PDF; o responsável confirmou o novo visualizador no navegador em 13/10/2026. Vídeo/áudio, prévia manual de ZIP, análise de malware e portal de convidados ficam para as próximas partes. Os limites do parser são contenção de recursos, sem sandbox completa de filesystem/rede; não abrir este fluxo para arquivos externos antes desse gate.
+O teste direto no R2 real passou para PNG/PDF/MP4/MP3/WAV; o responsável confirmou o visualizador de PDF no navegador em 13/10/2026. O responsável confirmou a reprodução de vídeo/áudio no navegador em 13/10/2026. Prévia manual de ZIP, análise de malware e portal de convidados ficam para as próximas partes. Os limites do parser são contenção de recursos, sem sandbox completa de filesystem/rede; não abrir este fluxo para arquivos externos antes desse gate.

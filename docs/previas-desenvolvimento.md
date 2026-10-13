@@ -1,6 +1,6 @@
 # Prévias privadas de imagem e PDF
 
-Esta parte entrega prévias para conferência do criador autenticado. Não implementa portal convidado, publicação, aprovação, vídeo/áudio, prévia manual de ZIP ou verificação de malware. F04 do PRD ainda não está completo.
+Esta parte entrega prévias para conferência do criador autenticado, incluindo imagem/PDF e agora vídeo/áudio. Não implementa portal convidado, publicação, aprovação, prévia manual de ZIP ou verificação de malware. F04 do PRD ainda não está completo.
 
 ## Executar
 
@@ -30,6 +30,20 @@ O parser recebe somente caminhos temporários e MIME permitido, sem nomes do usu
 Esses mecanismos contêm recursos; **não são sandbox completa de acesso a arquivos/rede**. Não há varredura antivírus nesta parte. Antes de aceitar arquivos externos ou abrir um portal de convidados, definir isolamento de identidade/filesystem/rede do worker e implementar análise de malware com política de falha fechada. Nenhuma saída desta parte deve ser tratada como aprovação de segurança do original.
 
 Referências: [limites de Job Objects](https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_basic_limit_information), [Job Objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects), [API do PDFium Python](https://pypdfium2.readthedocs.io/en/stable/python_api.html).
+
+## Vídeo e áudio
+
+Instale FFmpeg/FFprobe para seu sistema a partir das opções indicadas no [site oficial](https://ffmpeg.org/download.html). No segundo PC usamos FFmpeg 9.0.2 Essentials, [build Windows Gyan](https://www.gyan.dev/ffmpeg/builds/), SHA-256 do ZIP `60f467265b1e312373dbcd92200c2618a74850f98d3d078e94296bb3fa2047ba`. Não versione executáveis ou arquivos de clientes. Configure MEDIA_FFMPEG e MEDIA_FFPROBE com os caminhos absolutos no .env e reinicie API/worker.
+
+MP4 de até 30 min produz um trecho inicial de até 60 s em H.264/AAC 720p com marca nos pixels. MP3/WAV de até 30 min produzem trecho de até 60 s em M4A AAC 96 kbps. Áudio não recebe marca visual; a proteção desta prévia é a compressão e o limite de trecho. A saída é sempre derivada, sem fallback para original. O alvo de 59,9 s evita ultrapassar 60 s por arredondamento do codec.
+
+O subprocesso FFmpeg participa do mesmo Job Object do Python no Windows: até 2 processos, 768 MiB agregados, 90 s de CPU no job, sem possibilidade de criar outros descendentes. Linux mantém rlimits herdados por processo. FFprobe tem timeout de 15 s, FFmpeg de 120 s e o parser inteiro de 180 s; o ciclo continua limitado a 5 min. Demuxers são fixos, somente file é permitido e referências externas mov são desativadas. Esses cuidados não equivalem à sandbox completa de acesso a arquivos/rede exigida antes do portal.
+
+No navegador, Ver prévia exibe player com controles nativos e sem autoplay; clique em reproduzir. O player é interrompido ao fechar ou atualizar. Novas requisições Range após expirar a URL de 60 s podem falhar; Atualizar renova a URL e reinicia a reprodução. Native desktop/mobile ainda não têm reprodutor validado.
+
+Para executar os 10 testes Python, forneça MEDIA_FFMPEG e MEDIA_FFPROBE ao processo e rode `python apps/media_worker/test_render.py`. Sem essas variáveis os 5 testes temporais são marcados como skip, não comprovando suporte a vídeo/áudio. Na execução validada deste PC não houve skips.
+
+Validação temporal: MP4/MP3/WAV sintéticos passaram por API → worker → R2 real com CORS/Range/privacidade e SHA-256 dos originais; vídeo inspecionado com marca, 1280 × 720 H.264/AAC. PostgreSQL, API e widgets passaram nos testes descritos em progress.md. O responsável confirmou o player no navegador em 13/10/2026.
 
 ## Validação em 13/10/2026
 

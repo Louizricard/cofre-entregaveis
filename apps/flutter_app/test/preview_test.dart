@@ -6,6 +6,8 @@ import 'package:cofre_app/presentation/preview.dart';
 
 import 'fake_files.dart';
 
+import 'package:cofre_app/presentation/private_media.dart';
+
 void main() {
   Future<void> mount(WidgetTester tester, FakeFiles files) async {
     await tester.pumpWidget(
@@ -67,4 +69,20 @@ void main() {
       'https://preview.invalid/page-2.jpg',
     );
   });
+  for (final kind in ['AUDIO', 'VIDEO']) {
+    testWidgets('prévia $kind usa somente derivado no reprodutor', (
+      tester,
+    ) async {
+      final files = FakeFiles()
+        ..previewState = 'READY'
+        ..previewKind = kind;
+      await mount(tester, files);
+      expect(find.byType(Image), findsNothing);
+      final media = tester.widget<PrivateMedia>(find.byType(PrivateMedia));
+      expect(media.audio, kind == 'AUDIO');
+      expect(media.url, startsWith('https://preview.invalid/'));
+      expect(find.text('Trecho de prévia • até 60 segundos'), findsOneWidget);
+      expect(find.byTooltip('Próxima página'), findsNothing);
+    });
+  }
 }

@@ -3,7 +3,9 @@ import type { Database } from '@cofre/database';
 import { DATABASE } from './config.js';
 import { STORAGE, type ObjectStorage } from './storage.js';
 export const MEDIA_PROFILE = 'image-pdf-v1';
-export const previewSupported = (mime: string) => ['image/png', 'image/jpeg', 'image/webp', 'application/pdf'].includes(mime);
+export const temporalSupported = (mime: string) => ['video/mp4', 'audio/mpeg', 'audio/wav'].includes(mime);
+export const previewSupported = (mime: string) => ['image/png', 'image/jpeg', 'image/webp', 'application/pdf'].includes(mime) || temporalSupported(mime);
+export const previewProfile = (mime: string) => temporalSupported(mime) ? 'temporal-v1' : MEDIA_PROFILE;
 @Injectable()
 export class MediaService {
  constructor(@Inject(DATABASE) private readonly db: Database, @Inject(STORAGE) private readonly storage: ObjectStorage | null) {}
@@ -33,7 +35,9 @@ export class MediaService {
    throw new ConflictException({ code: 'PREVIEW_NOT_READY', message: 'A prévia ainda não está disponível.' });
   }
   if (!this.storage?.preview) throw new ServiceUnavailableException({ code: 'STORAGE_UNAVAILABLE', message: 'Prévia indisponível. Tente novamente.' });
-  try { return { url: await this.storage.preview(job.pages[page - 1].objectKey), expiresAt: new Date(Date.now() + 60000), page, pages: job.pages.length }; }
+  const derivative = job.pages[page - 1];
+  try { return { url: await this.storage.preview(derivative.objectKey, derivative.mime), expiresAt: new Date(Date.now() + 60000), page, pages: job.pages.length,
+   kind: derivative.kind, mime: derivative.mime, durationMs: derivative.durationMs }; }
   catch { throw new ServiceUnavailableException({ code: 'STORAGE_UNAVAILABLE', message: 'Prévia indisponível. Tente novamente.' }); }
  }
 }

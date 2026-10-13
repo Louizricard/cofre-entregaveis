@@ -3,6 +3,7 @@ import 'package:cofre_app/generated/api.g.dart';
 
 class FakeFiles implements FilesRepository {
   String previewState = 'PENDING';
+  String previewKind = 'IMAGE';
   final previewPages = <int>[];
   @override
   Future<PreviewStateView> previewStatus(String id) async => PreviewStateView(
@@ -20,6 +21,13 @@ class FakeFiles implements FilesRepository {
   Future<PreviewView> preview(String id, int page) async {
     previewPages.add(page);
     return PreviewView(
+      kind: previewKind,
+      mime: previewKind == 'IMAGE'
+          ? 'image/jpeg'
+          : previewKind == 'VIDEO'
+          ? 'video/mp4'
+          : 'audio/mp4',
+      durationMs: previewKind == 'IMAGE' ? null : 3000,
       url: 'https://preview.invalid/page-$page.jpg',
       expiresAt: '2026-10-13T12:00:00Z',
       page: page,

@@ -308,18 +308,27 @@ class PreviewPageDto {
 }
 
 class PreviewView {
+  final String kind;
+  final String mime;
+  final int? durationMs;
   final String url;
   final String expiresAt;
   final int page;
   final int pages;
-  const PreviewView({required this.url, required this.expiresAt, required this.page, required this.pages});
+  const PreviewView({required this.kind, required this.mime, required this.durationMs, required this.url, required this.expiresAt, required this.page, required this.pages});
   factory PreviewView.fromJson(Map<String, dynamic> json) => PreviewView(
+    kind: json['kind'] as String,
+    mime: json['mime'] as String,
+    durationMs: json['durationMs'] == null ? null : json['durationMs'] as int,
     url: json['url'] as String,
     expiresAt: json['expiresAt'] as String,
     page: json['page'] as int,
     pages: json['pages'] as int,
   );
   Map<String, dynamic> toJson() => {
+    'kind': kind,
+    'mime': mime,
+    'durationMs': durationMs,
     'url': url,
     'expiresAt': expiresAt,
     'page': page,

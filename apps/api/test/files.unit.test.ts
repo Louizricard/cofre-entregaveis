@@ -24,5 +24,11 @@ test('URLs R2 restringem parte, tamanho e expiração; downloads usam attachment
   assert.equal(download.searchParams.get('X-Amz-Expires'), '60');
   assert.match(download.searchParams.get('response-content-disposition')!, /^attachment;/);
   assert.equal(download.searchParams.get('response-content-type'), 'application/octet-stream');
+  for (const mime of ['video/mp4', 'audio/mp4']) {
+   const preview = new URL(await storage.preview('previews/derived', mime));
+   assert.equal(preview.searchParams.get('X-Amz-Expires'), '60');
+   assert.equal(preview.searchParams.get('response-content-type'), mime);
+   assert.equal(preview.searchParams.get('response-content-disposition'), 'inline');
+  }
  } finally { storage.close(); }
 });

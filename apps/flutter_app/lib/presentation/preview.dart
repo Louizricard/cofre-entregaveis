@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/files_repository.dart';
 import '../generated/api.g.dart';
+import 'private_media.dart';
 
 class PreviewDialog extends ConsumerStatefulWidget {
   final String assetId;
@@ -95,10 +96,16 @@ class _PreviewDialogState extends ConsumerState<PreviewDialog> {
                     : 'Não foi possível gerar a prévia. Você pode tentar novamente.',
               ),
             if (_status?.state == 'UNSUPPORTED')
-              const Text(
-                'A prévia automática está disponível para imagens e PDFs. Este formato ainda não tem prévia.',
+              const Text('Este formato ainda não tem prévia automática.'),
+            if (_preview != null && _preview!.kind != 'IMAGE') ...[
+              const Text('Trecho de prévia • até 60 segundos'),
+              PrivateMedia(
+                key: ValueKey(_preview!.url),
+                url: _preview!.url,
+                audio: _preview!.kind == 'AUDIO',
               ),
-            if (_preview != null) ...[
+            ],
+            if (_preview != null && _preview!.kind == 'IMAGE') ...[
               Text('Página $_page de ${_preview!.pages}'),
               Image.network(
                 _preview!.url,

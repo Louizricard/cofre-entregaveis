@@ -7,7 +7,7 @@ import { serial } from './transactions.js';
 import { extensions, FILE_MAX, matchesSignature, PART_SIZE, QUOTA_MAX, validDeclaredType } from './file-types.js';
 import type { AssetView, CompleteUploadDto, StartUploadDto } from './files.dto.js';
 import type { ListQuery } from './projects.dto.js';
-import { previewSupported } from './media.service.js';
+import { previewSupported, previewProfile } from './media.service.js';
 
 export const MAINTENANCE = Symbol('MAINTENANCE');
 const activeStates = ['INITIATING', 'UPLOADING', 'COMPLETING', 'VALIDATING'] as const;
@@ -179,7 +179,7 @@ export class FilesService implements OnModuleInit, OnModuleDestroy {
     const result = await tx.asset.updateMany({ where: { id, leaseToken: token, status: 'VALIDATING' }, data: { status: 'READY', leaseToken: null, leaseUntil: null } });
     if (!result.count) throw conflict('UPLOAD_STATE', 'A operação mudou. Atualize a lista.');
     await tx.workspace.update({ where: { id: workspaceId }, data: { storageReservedBytes: { decrement: a.sizeBytes }, storageUsedBytes: { increment: a.sizeBytes }, activeUploads: { decrement: 1 } } });
-    await tx.mediaJob.upsert({ where: { assetId: id }, create: { assetId: id, state: previewSupported(a.mime) ? 'PENDING' : 'UNSUPPORTED' }, update: {} });
+    await tx.mediaJob.upsert({ where: { assetId: id }, create: { assetId: id, profile: previewProfile(a.mime), state: previewSupported(a.mime) ? 'PENDING' : 'UNSUPPORTED' }, update: {} });
     return view(await tx.asset.findUniqueOrThrow({ where: { id } }));
    });
   } catch (e) {

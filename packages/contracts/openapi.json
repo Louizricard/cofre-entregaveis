@@ -2970,6 +2970,26 @@
       "PreviewView": {
         "type": "object",
         "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "IMAGE",
+              "VIDEO",
+              "AUDIO"
+            ]
+          },
+          "mime": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "video/mp4",
+              "audio/mp4"
+            ]
+          },
+          "durationMs": {
+            "type": "integer",
+            "nullable": true
+          },
           "url": {
             "type": "string"
           },
@@ -2985,6 +3005,9 @@
           }
         },
         "required": [
+          "kind",
+          "mime",
+          "durationMs",
           "url",
           "expiresAt",
           "page",

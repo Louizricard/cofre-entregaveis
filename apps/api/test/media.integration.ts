@@ -24,6 +24,11 @@ test('prévias privadas: fila persistente, concorrência, falha e autorização'
  };
  const renderer: Renderer = { render: async (_source, _mime, output) => {
   if (failRender) throw new Error('Parser crashed');
+  if (['video/mp4', 'audio/wav', 'audio/mpeg'].includes(_mime)) {
+   const video = _mime === 'video/mp4'; const file = video ? 'preview.mp4' : 'preview.m4a';
+   await writeFile(join(output, file), Buffer.alloc(200));
+   return [{ file, width: video ? 1280 : 0, height: video ? 720 : 0, size: 200, kind: video ? 'VIDEO' : 'AUDIO', mime: video ? 'video/mp4' : 'audio/mp4', durationMs: 3000 }];
+  }
   await writeFile(join(output, 'page-1.jpg'), Buffer.alloc(100));
   return [{ file: 'page-1.jpg', width: 100, height: 100, size: 100 }];
  } };
@@ -120,6 +125,22 @@ test('prévias privadas: fila persistente, concorrência, falha e autorização'
    await mutate(`/assets/${zip.id}/preview`, { page: 1 }, a.cookie).expect(409);
    await mutate('/projects/' + a.projectId + '/archive', {}, a.cookie).expect(200);
    await mutate(`/assets/${first.id}/preview`, { page: 1 }, a.cookie).expect(409);
+  });
+  await t.test('vídeo e áudio têm metadados, MIME e chaves próprios; suporte anterior é reprocessado', async () => {
+   await db.project.update({ where: { id: a.projectId }, data: { status: 'ACTIVE' } });
+   for (const mime of ['video/mp4', 'audio/wav', 'audio/mpeg']) {
+    const next = await asset(mime);
+    await db.mediaJob.create({ data: { assetId: next.id, state: 'UNSUPPORTED' } });
+    await worker.tick();
+    const job = await db.mediaJob.findUniqueOrThrow({ where: { assetId: next.id }, include: { pages: true } });
+    assert.equal(job.state, 'READY'); assert.equal(job.profile, 'temporal-v1');
+    const result = await mutate(`/assets/${next.id}/preview`, { page: 1 }, a.cookie).expect(200);
+    assert.equal(result.body.kind, mime === 'video/mp4' ? 'VIDEO' : 'AUDIO');
+    assert.equal(result.body.mime, mime === 'video/mp4' ? 'video/mp4' : 'audio/mp4');
+    assert.equal(result.body.durationMs, 3000); assert.notEqual(job.pages[0].objectKey, next.objectKey);
+    await mutate(`/assets/${next.id}/preview`, { page: 1 }, b.cookie).expect(404);
+   }
+   assert.equal((await db.workspace.findUniqueOrThrow({ where: { id: a.workspaceId } })).storageReservedBytes, 0n);
   });
   await t.test('cota insuficiente falha sem reservar nem iniciar parser', async () => {
    await db.project.update({ where: { id: a.projectId }, data: { status: 'ACTIVE' } });

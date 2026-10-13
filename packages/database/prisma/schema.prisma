@@ -155,6 +155,9 @@ model PreviewPage {
  sizeBytes BigInt
  width Int
  height Int
+ kind String @default("IMAGE") @db.VarChar(10)
+ mime String @default("image/jpeg") @db.VarChar(40)
+ durationMs Int?
  job MediaJob @relation(fields: [jobId], references: [id], onDelete: Restrict)
  @@unique([jobId, number])
 }
