@@ -10,12 +10,13 @@ import math
 import os
 from pathlib import Path
 import sys
+import subprocess
 import warnings
 
 JOB = None
 
 
-def limit_resources():
+def limit_resources(children=False):
     global JOB
     if os.name == 'nt':
         from ctypes import wintypes as w
@@ -40,10 +41,12 @@ def limit_resources():
         k.GetCurrentProcess.restype = w.HANDLE
         JOB = k.CreateJobObjectW(None, None)
         limits = EXTENDED()
-        limits.basic.flags = 0x2 | 0x8 | 0x100 | 0x2000  # CPU, active process, memory, kill on close
+        limits.basic.flags = 0x2 | 0x4 | 0x8 | 0x100 | 0x200 | 0x2000
         limits.basic.process_time = 90 * 10_000_000
-        limits.basic.active = 1
+        limits.basic.job_time = 90 * 10_000_000
+        limits.basic.active = 2 if children else 1
         limits.process_memory = 768 * 1024 * 1024
+        limits.job_memory = 768 * 1024 * 1024
         if not JOB or not k.SetInformationJobObject(JOB, 9, ctypes.byref(limits), ctypes.sizeof(limits)):
             raise RuntimeError('RESOURCE_LIMITS_UNAVAILABLE')
         if not k.AssignProcessToJobObject(JOB, k.GetCurrentProcess()):
@@ -58,8 +61,78 @@ def limit_resources():
         raise RuntimeError('RESOURCE_LIMITS_UNAVAILABLE')
 
 
+def tool(executable, args, timeout, capture=False):
+    if not executable or not Path(executable).is_absolute() or not Path(executable).is_file():
+        raise ValueError('MEDIA_TOOL_UNAVAILABLE')
+    # Anonymous pipes work in AppContainer without granting access to the NUL device.
+    result = subprocess.run([executable, *args], shell=False, input=b'',
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                            timeout=timeout, creationflags=0x08000000 if os.name == 'nt' else 0)
+    if result.returncode != 0 or len(result.stdout) > 32768:
+        raise ValueError('MEDIA_TOOL_FAILED')
+    return result.stdout
+
+
+def probe(source, demuxer):
+    return json.loads(tool(os.environ.get('MEDIA_FFPROBE', ''), ['-v', 'error', '-max_alloc', '134217728',
+                     '-protocol_whitelist', 'file', '-f', demuxer, '-show_entries',
+                     'format=duration:stream=codec_type,width,height', '-of', 'json', str(source)], 15, True))
+
+
+def render_temporal(source, mime, output):
+    demuxer = {'video/mp4': 'mov', 'audio/mpeg': 'mp3', 'audio/wav': 'wav'}[mime]
+    info = probe(source, demuxer)
+    duration = float(info.get('format', {}).get('duration', 0))
+    streams = info.get('streams', [])
+    if not math.isfinite(duration) or not 0 < duration <= 1800 or len(streams) > 20:
+        raise ValueError('DURATION_LIMIT')
+    video = mime == 'video/mp4'
+    wanted = [s for s in streams if s.get('codec_type') == ('video' if video else 'audio')]
+    if not wanted:
+        raise ValueError('MISSING_STREAM')
+    if video and (not 1 <= wanted[0].get('width', 0) <= 7680 or not 1 <= wanted[0].get('height', 0) <= 4320):
+        raise ValueError('VIDEO_DIMENSION_LIMIT')
+    name = 'preview.mp4' if video else 'preview.m4a'
+    args = ['-nostdin', '-v', 'error', '-y', '-max_alloc', '134217728', '-threads', '2',
+            '-protocol_whitelist', 'file', '-f', demuxer]
+    if video:
+        args += ['-enable_drefs', '0']
+    args += ['-i', str(source)]
+    if video:
+        from PIL import Image, ImageDraw, ImageFont
+        watermark = Image.new('RGBA', (1280, 720), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(watermark)
+        font = ImageFont.load_default(size=28)
+        for y in (30, 330, 630):
+            for x in (25, 675):
+                draw.text((x, y), 'COFRE - PREVIA', font=font, fill='white', stroke_width=2, stroke_fill='black')
+        watermark.save(output / 'watermark.png')
+        args += ['-protocol_whitelist', 'file', '-i', str(output / 'watermark.png'), '-filter_complex_threads', '1',
+                 '-filter_complex', '[0:v:0]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1[v];[v][1:v]overlay=0:0:format=auto[out]',
+                 '-map', '[out]', '-map', '0:a:0?', '-c:v', 'libx264', '-threads', '2', '-preset', 'veryfast',
+                 '-pix_fmt', 'yuv420p', '-profile:v', 'baseline', '-level:v', '3.1', '-r', '24', '-g', '48',
+                 '-b:v', '1600k', '-maxrate', '1800k', '-bufsize', '3600k']
+    else:
+        args += ['-map', '0:a:0', '-vn']
+    args += ['-t', str(min(duration, 59.9)), '-c:a', 'aac', '-ac', '2', '-ar', '44100', '-b:a', '96k',
+             '-map_metadata', '-1', '-map_chapters', '-1', '-movflags', '+faststart', '-fs', '33554432', str(output / name)]
+    tool(os.environ.get('MEDIA_FFMPEG', ''), args, 120)
+    result = probe(output / name, 'mov')
+    real_duration = float(result.get('format', {}).get('duration', 0))
+    size = (output / name).stat().st_size
+    if not math.isfinite(real_duration) or not 0 < real_duration <= 60 or not 0 < size <= 32 * 1024 * 1024:
+        raise ValueError('PREVIEW_LIMIT')
+    return [dict(file=name, size=size, width=1280 if video else 0, height=720 if video else 0,
+                 kind='VIDEO' if video else 'AUDIO', mime='video/mp4' if video else 'audio/mp4', durationMs=math.ceil(real_duration * 1000))]
+
+
 def render(source, mime, output):
-    limit_resources()
+    temporal = mime in ('video/mp4', 'audio/mpeg', 'audio/wav')
+    limit_resources(children=temporal)
+    if temporal:
+        pages = render_temporal(source, mime, output)
+        (output / 'manifest.json').write_text(json.dumps(pages), encoding='utf-8')
+        return
     from PIL import Image, ImageDraw, ImageFont, ImageOps
     Image.MAX_IMAGE_PIXELS = 40_000_000
     warnings.simplefilter('error', Image.DecompressionBombWarning)

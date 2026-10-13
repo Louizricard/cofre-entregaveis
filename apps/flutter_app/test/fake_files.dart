@@ -2,7 +2,40 @@ import 'package:cofre_app/data/files_repository.dart';
 import 'package:cofre_app/generated/api.g.dart';
 
 class FakeFiles implements FilesRepository {
+  @override
+  Future<PreviewStateView> retryScan(String id) async {
+    update(
+      AssetView.fromJson({
+        ...((await asset(id)).toJson()),
+        'scanStatus': 'PENDING',
+      }),
+    );
+    return const PreviewStateView(
+      state: 'PENDING',
+      failureCode: 'SECURITY_SCAN_REQUIRED',
+      pages: 0,
+    );
+  }
+
+  final manualLinks = <String, String>{};
+  @override
+  Future<PreviewStateView> manualPreview(String id, String sourceId) async {
+    manualLinks[id] = sourceId;
+    return previewStatus(sourceId);
+  }
+
+  @override
+  Future<PreviewStateView> removeManualPreview(String id) async {
+    manualLinks.remove(id);
+    return const PreviewStateView(
+      state: 'UNSUPPORTED',
+      failureCode: null,
+      pages: 0,
+    );
+  }
+
   String previewState = 'PENDING';
+  String previewKind = 'IMAGE';
   final previewPages = <int>[];
   @override
   Future<PreviewStateView> previewStatus(String id) async => PreviewStateView(
@@ -20,6 +53,13 @@ class FakeFiles implements FilesRepository {
   Future<PreviewView> preview(String id, int page) async {
     previewPages.add(page);
     return PreviewView(
+      kind: previewKind,
+      mime: previewKind == 'IMAGE'
+          ? 'image/jpeg'
+          : previewKind == 'VIDEO'
+          ? 'video/mp4'
+          : 'audio/mp4',
+      durationMs: previewKind == 'IMAGE' ? null : 3000,
       url: 'https://preview.invalid/page-$page.jpg',
       expiresAt: '2026-10-13T12:00:00Z',
       page: page,
@@ -76,6 +116,7 @@ class FakeFiles implements FilesRepository {
   @override
   Future<UploadView> start(String versionId, StartUploadDto input) async {
     final asset = AssetView(
+      scanStatus: 'CLEAN',
       id: 'asset-1',
       fileName: input.fileName,
       mime: input.declaredMime,

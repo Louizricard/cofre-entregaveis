@@ -6,6 +6,7 @@
     "node": ">=24.19.0 <25"
   },
   "scripts": {
+    "security:update": "pnpm build && node apps/api/dist/src/signatures-main.js",
     "media:worker": "pnpm build && node apps/api/dist/src/media-main.js",
     "storage:check": "pnpm build && node apps/api/dist/src/storage-check.js",
     "dev:api": "pnpm build && pnpm --filter @cofre/api start",

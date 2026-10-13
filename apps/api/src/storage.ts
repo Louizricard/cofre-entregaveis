@@ -11,8 +11,8 @@ export const STORAGE = Symbol('STORAGE');
 export type StoredPart = { partNumber: number; etag: string; size: number };
 export interface ObjectStorage {
  readToFile?(key: string, path: string, expectedBytes: number, signal: AbortSignal): Promise<void>;
- putPreview?(key: string, bytes: Uint8Array, signal: AbortSignal): Promise<void>;
- preview?(key: string): Promise<string>;
+ putPreview?(key: string, bytes: Uint8Array, signal: AbortSignal, mime?: string): Promise<void>;
+ preview?(key: string, mime?: string): Promise<string>;
  create(key: string, mime: string, assetId: string): Promise<string>;
  signPart(key: string, uploadId: string, partNumber: number, size: number): Promise<string>;
  parts(key: string, uploadId: string): Promise<StoredPart[]>;
@@ -46,12 +46,12 @@ export class R2Storage implements ObjectStorage {
   await pipeline(result.Body as Readable, limit, createWriteStream(path, { flags: 'wx' }), { signal });
   if (received !== expectedBytes) throw new Error('Incomplete object');
  }
- async putPreview(key: string, bytes: Uint8Array, signal: AbortSignal) {
+ async putPreview(key: string, bytes: Uint8Array, signal: AbortSignal, mime = 'image/jpeg') {
   await this.client.send(new PutObjectCommand({ ...this.base(key), Body: bytes, ContentLength: bytes.length,
-   ContentType: 'image/jpeg', CacheControl: 'private, max-age=60' }), { abortSignal: signal });
+   ContentType: mime, CacheControl: 'private, max-age=60' }), { abortSignal: signal });
  }
- preview(key: string) {
-  return getSignedUrl(this.client, new GetObjectCommand({ ...this.base(key), ResponseContentType: 'image/jpeg',
+ preview(key: string, mime = 'image/jpeg') {
+  return getSignedUrl(this.client, new GetObjectCommand({ ...this.base(key), ResponseContentType: mime,
    ResponseContentDisposition: 'inline', ResponseCacheControl: 'private, max-age=60' }), { expiresIn: 60 });
  }
  async create(key: string, mime: string, assetId: string) {

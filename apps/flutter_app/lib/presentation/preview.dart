@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/files_repository.dart';
 import '../generated/api.g.dart';
+import 'private_media.dart';
 
 class PreviewDialog extends ConsumerStatefulWidget {
   final String assetId;
@@ -83,22 +84,36 @@ class _PreviewDialogState extends ConsumerState<PreviewDialog> {
             if (_loading) const LinearProgressIndicator(),
             if (_error != null) Text(_error!),
             if (_status?.state == 'PENDING')
-              const Text('Prévia na fila de processamento.'),
+              Text(
+                _status?.failureCode == 'SECURITY_SCAN_REQUIRED'
+                    ? 'Aguarde a análise de segurança antes de visualizar.'
+                    : 'Prévia na fila de processamento.',
+              ),
             if (_status?.state == 'RUNNING')
               Text(
                 _status?.failureCode == null ? 'Preparando prévia. Aguarde…' : 'A geração falhou. Aguardando limpeza para tentar novamente.',
               ),
             if (_status?.state == 'FAILED')
               Text(
-                _status?.failureCode == 'PREVIEW_QUOTA'
+                _status?.failureCode == 'SECURITY_REJECTED'
+                    ? 'Arquivo bloqueado pela análise de segurança.'
+                    : _status?.failureCode == 'SECURITY_SCAN_ERROR'
+                    ? 'A análise de segurança falhou. Feche esta janela e repita a análise no arquivo.'
+                    : _status?.failureCode == 'PREVIEW_QUOTA'
                     ? 'Não há espaço disponível para gerar esta prévia.'
                     : 'Não foi possível gerar a prévia. Você pode tentar novamente.',
               ),
             if (_status?.state == 'UNSUPPORTED')
-              const Text(
-                'A prévia automática está disponível para imagens e PDFs. Este formato ainda não tem prévia.',
+              const Text('Este formato ainda não tem prévia automática.'),
+            if (_preview != null && _preview!.kind != 'IMAGE') ...[
+              const Text('Trecho de prévia • até 60 segundos'),
+              PrivateMedia(
+                key: ValueKey(_preview!.url),
+                url: _preview!.url,
+                audio: _preview!.kind == 'AUDIO',
               ),
-            if (_preview != null) ...[
+            ],
+            if (_preview != null && _preview!.kind == 'IMAGE') ...[
               Text('Página $_page de ${_preview!.pages}'),
               Image.network(
                 _preview!.url,
@@ -142,7 +157,8 @@ class _PreviewDialogState extends ConsumerState<PreviewDialog> {
       ),
     ),
     actions: [
-      if (_status?.state == 'FAILED')
+      if (_status?.state == 'FAILED' &&
+          !(_status?.failureCode?.startsWith('SECURITY') ?? false))
         TextButton(
           onPressed: _loading ? null : () => _load(retry: true),
           child: const Text('Reprocessar prévia'),

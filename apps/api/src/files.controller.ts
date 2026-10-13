@@ -7,7 +7,7 @@ import { EmptyDto, ListQuery } from './projects.dto.js';
 import { FilesService } from './files.service.js';
 import { type AuthRequest, MutationGuard, SessionGuard } from './security.js';
 import { MediaService } from './media.service.js';
-import { PreviewStateView, PreviewView } from './media.dto.js';
+import { ManualPreviewDto, PreviewStateView, PreviewView } from './media.dto.js';
 import { IsInt, Max, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 class PreviewPageDto {
@@ -25,6 +25,12 @@ class PreviewPageDto {
 @Controller()
 export class FilesController {
  constructor(private readonly files: FilesService, private readonly media: MediaService) {}
+ @Post('assets/:id/scan-retry') @HttpCode(200) @UseGuards(MutationGuard) @ApiOkResponse({ type: PreviewStateView })
+ scanRetry(@Req() req: AuthRequest, @Param('id', new ParseUUIDPipe()) id: string, @Body() dto: EmptyDto) { void dto; return this.media.retryScan(req.identity.workspace.id, id); }
+ @Post('assets/:id/manual-preview') @HttpCode(200) @UseGuards(MutationGuard) @ApiOkResponse({ type: PreviewStateView })
+ manualPreview(@Req() req: AuthRequest, @Param('id', new ParseUUIDPipe()) id: string, @Body() dto: ManualPreviewDto) { return this.media.manual(req.identity.workspace.id, id, dto.previewAssetId); }
+ @Delete('assets/:id/manual-preview') @HttpCode(200) @UseGuards(MutationGuard) @ApiOkResponse({ type: PreviewStateView })
+ removeManualPreview(@Req() req: AuthRequest, @Param('id', new ParseUUIDPipe()) id: string, @Body() dto: EmptyDto) { void dto; return this.media.manual(req.identity.workspace.id, id, null); }
  @Get('assets/:id/preview-status') @ApiOkResponse({ type: PreviewStateView })
  previewStatus(@Req() req: AuthRequest, @Param('id', new ParseUUIDPipe()) id: string) { return this.media.state(req.identity.workspace.id, id); }
  @Post('assets/:id/preview') @HttpCode(200) @UseGuards(MutationGuard) @ApiOkResponse({ type: PreviewView })

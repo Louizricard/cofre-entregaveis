@@ -109,6 +109,9 @@ test('arquivos privados: transações PostgreSQL e adapter de armazenamento simu
    assert.equal((await mutate('/uploads/' + readyId + '/complete', body, a.cookie)).status, 200);
    assert.equal((await mutate('/uploads/' + readyId + '/complete', { parts: [{ partNumber: 1, etag: 'changed' }] }, a.cookie)).status, 409);
    const quota = await files.capabilities(a.workspaceId); assert.equal(quota.usedBytes, '9'); assert.equal(quota.reservedBytes, '0'); assert.equal(quota.activeUploads, 0);
+   assert.equal(done.body.scanStatus, 'PENDING');
+   assert.equal((await mutate('/assets/' + readyId + '/download', {}, a.cookie)).status, 409);
+   await server.db.asset.update({ where: { id: readyId }, data: { scanStatus: 'CLEAN', scannedAt: new Date(), scanSha256: 'a'.repeat(64), scanDefinitions: 'test' } });
    assert.equal((await mutate('/assets/' + readyId + '/download', {}, a.cookie)).status, 200);
    for (const path of ['/uploads/' + readyId + '/parts', '/uploads/' + readyId + '/complete', '/assets/' + readyId + '/download']) {
     const result = await mutate(path, path.endsWith('/parts') ? { partNumbers: [1] } : path.endsWith('/complete') ? body : {}, b.cookie);

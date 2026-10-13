@@ -21,6 +21,7 @@ export class CompleteUploadDto {
  @IsArray() @ArrayMinSize(1) @ArrayMaxSize(256) @ValidateNested({ each: true }) @Type(() => PartDto) parts!: PartDto[];
 }
 export class AssetView {
+ @ApiProperty({ enum: ['PENDING', 'RUNNING', 'CLEAN', 'REJECTED', 'ERROR'] }) scanStatus!: string;
  @ApiProperty({ format: 'uuid' }) id!: string;
  @ApiProperty() fileName!: string;
  @ApiProperty() mime!: string;
