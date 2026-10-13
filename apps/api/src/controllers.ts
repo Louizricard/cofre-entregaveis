@@ -3,7 +3,7 @@ import { ApiCookieAuth, ApiCreatedResponse, ApiHeader, ApiNoContentResponse, Api
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service.js';
-import { CsrfView, ErrorView, HealthView, IdentityView, LoginDto, ProjectsView, RegisterDto } from './dto.js';
+import { CsrfView, ErrorView, HealthView, IdentityView, LoginDto, RegisterDto } from './dto.js';
 import { DATABASE, SETTINGS, type Settings } from './config.js';
 import type { Database } from '@cofre/database';
 import { type AuthRequest, cookieOptions, csrfCookie, issueCsrf, issueSession, MutationGuard, SessionGuard, sessionCookie, validToken } from './security.js';
@@ -41,13 +41,6 @@ export class AuthController {
   res.clearCookie(sessionCookie(this.config), cookieOptions(this.config));
   res.clearCookie(csrfCookie(this.config), cookieOptions(this.config));
  }
-}
-@ApiTags('projects')
-@Controller('projects')
-export class ProjectsController {
- @Get() @UseGuards(SessionGuard) @ApiCookieAuth('session')
- @ApiOkResponse({ type: ProjectsView }) @ApiResponse({ status: 401, type: ErrorView })
- list(): ProjectsView { return { items: [], nextCursor: null }; }
 }
 @ApiTags('operations')
 @Controller()

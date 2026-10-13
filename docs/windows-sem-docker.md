@@ -8,7 +8,7 @@ Fontes: [requisitos Docker](https://docs.docker.com/desktop/setup/install/window
 
 ## Preparar uma instalação Windows
 
-O segundo PC está adiado. As instruções abaixo ficam disponíveis para quando essa etapa for retomada.
+O segundo PC Windows foi preparado em 11/10/2026, com SDKs portáteis e banco independente. As instruções abaixo se aplicam a novas instalações.
 
 Na raiz, baixe o ZIP **Windows x86-64 18.6** pelo link de binários EDB. Extraia para `.tools/postgresql/runtime`; deve existir `runtime/pgsql/bin/pg_ctl.exe`. O binário já foi preparado e validado neste PC. Não use instaladores antigos do Docker para contornar a checagem do Windows.
 

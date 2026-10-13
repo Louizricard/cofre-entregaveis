@@ -1,6 +1,6 @@
 # Cofre de Entregáveis — PRD técnico e primeiro marco
 
-Versão 1.2 · 9 de outubro de 2026 · Marco 1 concluído e validado
+Versão 1.5 · 13 de outubro de 2026 · Arquivos privados validados; prévias de imagem/PDF para criador implementadas
 
 ## 1. Objetivo e decisões
 
@@ -10,9 +10,9 @@ Flutter Web será a primeira interface entregue. A arquitetura deve admitir apli
 
 O monorepo usa pnpm para os pacotes TypeScript e ferramentas Flutter para Dart. OpenAPI é o contrato compartilhado; tipos TypeScript não são importáveis diretamente pelo aplicativo Flutter.
 
-O primeiro marco implementa somente cadastro, login, sessão, workspace e dashboard vazio. Está concluído neste PC, com testes automatizados e conferência manual confirmada pelo responsável em 09/10/2026. O restante deste documento orienta os próximos marcos.
+O primeiro marco implementa somente cadastro, login, sessão, workspace e dashboard vazio. Está concluído neste PC, com testes automatizados e conferência manual confirmada pelo responsável em 09/10/2026. Clientes e projetos (marco 2, parte 1) foram implementados em 11/10/2026; consulte docs/progress.md para evidências e pendências. O restante deste documento orienta os próximos marcos.
 
-Decisão operacional: desenvolvimento sem Docker/Compose. PostgreSQL 18.6 nativo, API Node e Flutter executam localmente. O Windows principal não pode ser atualizado; não exigir troca de sistema ou versões antigas de Docker. A validação no segundo PC fica adiada até depois da organização no GitHub e de nova decisão do responsável. Ver [ADR 0001](adr/0001-desenvolvimento-nativo.md) e [progresso](progress.md).
+Decisão operacional: desenvolvimento sem Docker/Compose. PostgreSQL 18.6 nativo, API Node e Flutter executam localmente. O Windows principal não pode ser atualizado; não exigir troca de sistema ou versões antigas de Docker. O segundo PC Windows foi preparado e validado em 11/10/2026. Ver [ADR 0001](adr/0001-desenvolvimento-nativo.md) e [progresso](progress.md).
 
 ## 2. Entregas e critérios de aceite
 
@@ -244,7 +244,7 @@ Validar 360, 768 e 1440 px; teclado e leitores de tela nos fluxos principais; es
 
 | Marco | Saída verificável | Estimativa indicativa |
 |---|---|---|
-| 1 Fundação | Cadastro, login, me, logout, banco e dashboard vazio validados no PC principal; segundo PC adiado | 1–2 semanas |
+| 1 Fundação | Cadastro, login, me, logout, banco e dashboard validados no PC principal e no segundo PC Windows | 1–2 semanas |
 | 2 Entrega privada | Projeto, upload multipart e download manual pelo criador; isolamento testado | 2 semanas |
 | 3 Revisão | Derivados, portal convidado, identidade, comentários, versões e aprovação; beta manual | 3–4 semanas |
 | 4 Pix | Spike aprovado, conta conectada e conciliação idempotente; testes de fraude de estado | 2–3 semanas |
@@ -266,7 +266,7 @@ Não fixar preços agora: medir GB armazenados, minutos processados, operações
 
 ## 12. Trabalhar em casa e no serviço
 
-Organizar e publicar o código em repositório privado na conta GitHub louizricard. A instalação e validação no segundo PC estão adiadas por decisão do responsável; quando retomadas, clonar a versão publicada. Versionar lockfiles, migrations, .env.example, versão Flutter e versão Node. Cada PC tem .env próprio com credenciais locais. Banco de desenvolvimento não é compartilhado; seeds reproduzem dados de teste. Nunca colocar arquivos reais de clientes ou dumps no Git.
+Organizar e publicar o código em repositório privado na conta GitHub louizricard. A instalação e validação no segundo PC foram concluídas em 11/10/2026; novos PCs devem clonar a versão publicada. Versionar lockfiles, migrations, .env.example, versão Flutter e versão Node. Cada PC tem .env próprio com credenciais locais. Banco de desenvolvimento não é compartilhado; seeds reproduzem dados de teste. Nunca colocar arquivos reais de clientes ou dumps no Git.
 
 Antes de começar: git status e git pull --ff-only. Ao terminar: conferir git diff, executar checks do marco, adicionar somente arquivos revisados, commit e push. Se houver mudança local antes de pull, resolver com commit ou stash consciente; não fazer reset destrutivo. Não trabalhar simultaneamente na mesma branch sem sincronizar. Usar branches curtas por tarefa e deixar um registro docs/progress.md com etapa concluída, comandos e pendências.
 
@@ -318,3 +318,8 @@ Prisma, NestJS e plugins Flutter terão versões e sintaxe verificadas na implem
 
 - 08/10/2026 — v1.1: PRD inicial e recorte do marco 1.
 - 09/10/2026 — v1.2: validação manual do marco 1 confirmada; PostgreSQL nativo adotado como padrão; Docker/Compose retirado do desenvolvimento; teste no segundo PC adiado; organização e publicação privada no GitHub autorizadas.
+
+- 11/10/2026 — v1.3: segundo PC preparado; clientes e projetos implementados localmente, com migration, isolamento e testes. Cloudflare ainda não configurado; arquivos são a próxima parte.
+
+- 12/10/2026 — v1.4: versões rascunho, upload multipart privado, cotas e download do criador preparados; testes locais passaram. Bucket/CORS/credenciais e validação com R2 real pendentes. Download de convidados segue condicionado aos marcos de aprovação/pagamento e análise de malware.
+- 13/10/2026 — v1.5: R2 real e upload/download/cancelamento pela interface validados. Primeira parte de prévias implementada: fila PostgreSQL, worker separado, limites de recursos e derivados privados com marca d’água para imagem/PDF. Testes locais e HTTP/R2 reais passaram; conferência manual do visualizador pendente. F04 completo, sandbox de identidade/filesystem/rede, malware e portal convidado continuam pendentes.

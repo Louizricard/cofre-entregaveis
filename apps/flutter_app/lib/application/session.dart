@@ -74,8 +74,3 @@ class SessionController extends Notifier<SessionState> {
     state = const SessionState(SessionPhase.signedOut);
   }
 }
-
-final projectsProvider = FutureProvider.autoDispose<ProjectsView>((ref) async {
-  ref.watch(sessionProvider);
-  return ref.read(authRepositoryProvider).projects();
-});

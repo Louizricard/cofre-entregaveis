@@ -12,7 +12,7 @@ Adotar PostgreSQL 18.6 nativo e processos locais Node/Flutter. No Windows, usar 
 
 Persistir desenvolvimento e testes em clusters distintos, portas 5432 e 5433. Exigir autenticação SCRAM e escuta apenas em localhost. Prisma continua responsável pelas migrations e pelo acesso ao banco.
 
-Remover Compose das configurações ativas. No Linux futuro, usar PostgreSQL nativo 18.6 e credenciais locais equivalentes; essa operação e o segundo PC ainda não foram validados.
+Remover Compose das configurações ativas. No Linux futuro, usar PostgreSQL nativo 18.6 e credenciais locais equivalentes; a operação Linux ainda não foi validada. O segundo PC Windows foi preparado e validado em 11/10/2026, mantendo esta decisão.
 
 ## Consequências
 

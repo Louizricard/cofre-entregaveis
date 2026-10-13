@@ -29,10 +29,6 @@ export class IdentityView {
  @ApiProperty({ type: WorkspaceView }) workspace!: WorkspaceView;
 }
 export class CsrfView { @ApiProperty() csrfToken!: string; }
-export class ProjectsView {
- @ApiProperty({ type: 'array', items: { type: 'object' }, maxItems: 0 }) items!: never[];
- @ApiProperty({ type: 'string', nullable: true, enum: [null] }) nextCursor!: null;
-}
 export class ErrorBody {
  @ApiProperty() code!: string;
  @ApiProperty() message!: string;

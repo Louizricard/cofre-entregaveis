@@ -10,13 +10,19 @@ url.searchParams.set('schema', 'cofre_test_' + randomUUID().replaceAll('-', ''))
 const env = { ...process.env, DATABASE_URL: url.href, TEST_DATABASE_URL: url.href, COFRE_INTEGRATION: '1', NODE_ENV: 'test' };
 const cli = process.env.npm_execpath;
 if (!cli) throw new Error('Execute com pnpm test:integration.');
-function run(args) {
- const result = spawnSync(process.execPath, [cli, ...args], { stdio: 'inherit', env });
+function run(args, testEnv = env) {
+ const result = spawnSync(process.execPath, [cli, ...args], { stdio: 'inherit', env: testEnv });
  if (result.status !== 0) process.exit(result.status ?? 1);
 }
 run(['db:generate']);
-run(['db:migrate']);
 run(['build']);
-const result = spawnSync(process.execPath, ['--test', 'apps/api/dist/test/auth.integration.js'], { stdio: 'inherit', env });
-console.log('Schema isolado de teste preservado: ' + url.searchParams.get('schema'));
-process.exit(result.status ?? 1);
+// Workers intentionally consume the whole queue. Each suite needs its own schema,
+// otherwise a fake worker can consume another suite's uploads and corrupt its quotas.
+for (const suite of ['auth', 'projects', 'files', 'media']) {
+ url.searchParams.set('schema', 'cofre_test_' + randomUUID().replaceAll('-', ''));
+ const testEnv = { ...env, DATABASE_URL: url.href, TEST_DATABASE_URL: url.href };
+ run(['db:migrate'], testEnv);
+ const result = spawnSync(process.execPath, ['--test', `apps/api/dist/test/${suite}.integration.js`], { stdio: 'inherit', env: testEnv });
+ console.log('Schema isolado de teste preservado: ' + url.searchParams.get('schema'));
+ if (result.status !== 0) process.exit(result.status ?? 1);
+}

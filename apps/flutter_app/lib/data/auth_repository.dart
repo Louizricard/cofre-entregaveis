@@ -15,7 +15,16 @@ abstract interface class AuthRepository {
   Future<IdentityView> login(LoginDto input);
   Future<IdentityView> register(RegisterDto input);
   Future<void> logout();
-  Future<ProjectsView> projects();
+  Future<ProjectsView> projects({
+    String? cursor,
+    String? search,
+    String? status,
+  });
+  Future<ClientsView> clients({String? cursor, String? search});
+  Future<ClientView> createClient(CreateClientDto input);
+  Future<ProjectView> createProject(CreateProjectDto input);
+  Future<ProjectView> project(String id);
+  Future<ProjectView> archiveProject(String id);
 }
 
 class HttpAuthRepository implements AuthRepository {
@@ -24,6 +33,7 @@ class HttpAuthRepository implements AuthRepository {
   String? _csrf;
   void Function()? onUnauthorized;
   late final CofreClient _api = CofreClient(_request);
+  CofreClient get api => _api;
   HttpAuthRepository(this.httpClient, this.base);
 
   Future<dynamic> _request(
@@ -43,7 +53,9 @@ class HttpAuthRepository implements AuthRepository {
         request.body = jsonEncode(body ?? <String, dynamic>{});
       }
       final response = await http.Response.fromStream(
-        await httpClient.send(request).timeout(const Duration(seconds: 15)),
+        await httpClient
+            .send(request)
+            .timeout(Duration(seconds: path.contains('/uploads') ? 110 : 15)),
       );
       final dynamic json = response.body.isEmpty
           ? null
@@ -74,7 +86,25 @@ class HttpAuthRepository implements AuthRepository {
   @override
   Future<IdentityView> register(RegisterDto input) => _api.authregister(input);
   @override
-  Future<ProjectsView> projects() => _api.projectslist();
+  Future<ProjectsView> projects({
+    String? cursor,
+    String? search,
+    String? status,
+  }) => _api.projectslist(cursor: cursor, search: search, status: status);
+  @override
+  Future<ClientsView> clients({String? cursor, String? search}) =>
+      _api.clientslist(cursor: cursor, search: search);
+  @override
+  Future<ClientView> createClient(CreateClientDto input) =>
+      _api.clientscreate(input);
+  @override
+  Future<ProjectView> createProject(CreateProjectDto input) =>
+      _api.projectscreate(input);
+  @override
+  Future<ProjectView> project(String id) => _api.projectsget(id);
+  @override
+  Future<ProjectView> archiveProject(String id) =>
+      _api.projectsarchive(const EmptyDto(), id);
   @override
   Future<void> logout() async {
     await _api.authlogout();

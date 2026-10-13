@@ -28,6 +28,135 @@ model Workspace {
  updatedAt DateTime @updatedAt @db.Timestamptz(3)
  members WorkspaceMember[]
  sessions Session[]
+ clients Client[]
+ projects Project[]
+ storageUsedBytes BigInt @default(0)
+ storageReservedBytes BigInt @default(0)
+ activeUploads Int @default(0)
+}
+
+enum ProjectStatus {
+ ACTIVE
+ ARCHIVED
+}
+model Client {
+ id String @id @default(uuid()) @db.Uuid
+ workspaceId String @db.Uuid
+ name String @db.VarChar(120)
+ email String @db.VarChar(254)
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+ projects Project[]
+ @@unique([workspaceId, id])
+ @@unique([workspaceId, email])
+}
+model Project {
+ id String @id @default(uuid()) @db.Uuid
+ workspaceId String @db.Uuid
+ clientId String @db.Uuid
+ title String @db.VarChar(160)
+ currency String @default("BRL") @db.Char(3)
+ balanceCents Int
+ includedRevisionRounds Int
+ status ProjectStatus @default(ACTIVE)
+ revision Int @default(0)
+ versions ProjectVersion[]
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ updatedAt DateTime @updatedAt @db.Timestamptz(3)
+ workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+ client Client @relation(fields: [workspaceId, clientId], references: [workspaceId, id], onDelete: Restrict)
+ @@index([workspaceId, id])
+ @@index([workspaceId, clientId])
+ @@unique([workspaceId, id])
+}
+enum UploadStatus {
+ INITIATING
+ UPLOADING
+ COMPLETING
+ VALIDATING
+ READY
+ ABORTING
+ ABORTED
+ FAILED
+}
+model ProjectVersion {
+ id String @id @default(uuid()) @db.Uuid
+ workspaceId String @db.Uuid
+ projectId String @db.Uuid
+ number Int
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ project Project @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Restrict)
+ assets Asset[]
+ @@unique([projectId, number])
+ @@unique([workspaceId, id])
+}
+model Asset {
+ id String @id @default(uuid()) @db.Uuid
+ workspaceId String @db.Uuid
+ versionId String @db.Uuid
+ fileName String @db.VarChar(200)
+ mime String @db.VarChar(100)
+ sizeBytes BigInt
+ objectKey String @unique
+ multipartId String?
+ status UploadStatus @default(INITIATING)
+ failureCode String? @db.VarChar(60)
+ expiresAt DateTime @db.Timestamptz(3)
+ leaseUntil DateTime? @db.Timestamptz(3)
+ leaseToken String? @db.Uuid
+ retryAt DateTime @default(now()) @db.Timestamptz(3)
+ cleanupAttempts Int @default(0)
+ completionHash String? @db.Char(64)
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ updatedAt DateTime @updatedAt @db.Timestamptz(3)
+ version ProjectVersion @relation(fields: [workspaceId, versionId], references: [workspaceId, id], onDelete: Restrict)
+ mediaJob MediaJob?
+ @@index([workspaceId, versionId, createdAt])
+ @@index([status, expiresAt])
+ @@index([status, retryAt])
+}
+enum MediaState {
+ PENDING
+ RUNNING
+ READY
+ FAILED
+ UNSUPPORTED
+}
+model MediaJob {
+ id String @id @default(uuid()) @db.Uuid
+ assetId String @unique @db.Uuid
+ profile String @default("image-pdf-v1") @db.VarChar(40)
+ state MediaState @default(PENDING)
+ attempts Int @default(0)
+ failureCode String? @db.VarChar(60)
+ retryAt DateTime @default(now()) @db.Timestamptz(3)
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ updatedAt DateTime @updatedAt @db.Timestamptz(3)
+ asset Asset @relation(fields: [assetId], references: [id], onDelete: Restrict)
+ runs MediaRun[]
+ pages PreviewPage[]
+ @@index([state, retryAt])
+}
+model MediaRun {
+ id String @id @default(uuid()) @db.Uuid
+ jobId String @db.Uuid
+ state String @default("RUNNING") @db.VarChar(20)
+ reservedBytes BigInt
+ keys Json @default("[]")
+ expiresAt DateTime @db.Timestamptz(3)
+ job MediaJob @relation(fields: [jobId], references: [id], onDelete: Restrict)
+ @@index([state, expiresAt])
+}
+model PreviewPage {
+ id String @id @default(uuid()) @db.Uuid
+ jobId String @db.Uuid
+ number Int
+ objectKey String @unique
+ sizeBytes BigInt
+ width Int
+ height Int
+ job MediaJob @relation(fields: [jobId], references: [id], onDelete: Restrict)
+ @@unique([jobId, number])
 }
 model WorkspaceMember {
  workspaceId String @db.Uuid

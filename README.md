@@ -1,10 +1,10 @@
-# Cofre de Entregáveis — marco 1
+# Cofre de Entregáveis — arquivos privados
 
-Monorepo com Flutter Web, NestJS/TypeScript e PostgreSQL/Prisma. Cadastro cria conta, workspace pessoal, membership OWNER e sessão na mesma transação. Login restaura a sessão por cookie; o dashboard protegido exibe o workspace e a lista vazia real. Marco 1 validado com testes automatizados e conferência manual do responsável.
+Monorepo com Flutter Web, NestJS/TypeScript e PostgreSQL/Prisma. Cadastro cria conta, workspace pessoal, membership OWNER e sessão na mesma transação. Login restaura a sessão por cookie; o dashboard protegido permite cadastrar clientes, criar projetos, consultar saldo/revisões e arquivar projetos. Fundação validada e primeira parte do marco 2 implementada.
 
 [PRD](docs/prd.md) · [Progresso](docs/progress.md) · [Ambiente Windows](docs/windows-sem-docker.md) · [Contribuição](CONTRIBUTING.md)
 
-Não há upload, processamento, portal de cliente, pagamentos nem assinatura. Não é necessário configurar Redis, R2 ou Mercado Pago.
+Versões e upload multipart privado foram validados com R2 real. Prévias privadas de imagem/PDF para o criador estão implementadas; o responsável confirmou o visualizador no navegador em 13/10/2026. Vídeo/áudio, malware, portal de cliente, aprovação e pagamentos continuam pendentes. R2 é necessário para enviar arquivos; login, clientes e projetos funcionam sem ele.
 
 ## Pré-requisitos e versões
 
@@ -27,7 +27,7 @@ Neste computador foi preparado um SDK portátil ignorado pelo Git em `.tools/flu
 
 ## Ambiente de desenvolvimento
 
-O padrão é [PostgreSQL nativo no Windows](docs/windows-sem-docker.md), iniciado por scripts locais e sem serviço global. Essa escolha foi validada neste PC e registrada na [ADR 0001](docs/adr/0001-desenvolvimento-nativo.md). O segundo PC será preparado somente quando o responsável retomar essa etapa.
+O padrão é [PostgreSQL nativo no Windows](docs/windows-sem-docker.md), iniciado por scripts locais e sem serviço global. Essa escolha foi validada neste PC e registrada na [ADR 0001](docs/adr/0001-desenvolvimento-nativo.md). O segundo PC Windows foi preparado e validado em 11/10/2026 com banco local independente.
 
 ## Preparação
 
@@ -97,7 +97,42 @@ flutter pub get --enforce-lockfile
 flutter run -d chrome --web-hostname localhost --web-port 8080 --dart-define=API_ORIGIN=http://localhost:3000
 ```
 
-Use **localhost** em ambos os serviços, sem misturar 127.0.0.1. A API permite CORS somente para `APP_ORIGIN`, com credentials explícitas no BrowserClient. A interface é pt-BR e contém cadastro, login, splash com recuperação de erro e dashboard vazio. Ao recarregar, chama `/auth/me`; 401 volta ao login.
+Use **localhost** em ambos os serviços, sem misturar 127.0.0.1. A API permite CORS somente para `APP_ORIGIN`, com credentials explícitas no BrowserClient. A interface é pt-BR e contém cadastro, login, splash com recuperação de erro e dashboard de clientes/projetos. Ao recarregar, chama `/auth/me`; 401 volta ao login.
+
+## Clientes e projetos — marco 2, parte 1
+
+No dashboard, use **Novo cliente** para cadastrar nome/e-mail ou **Novo projeto** para selecionar/cadastrar um cliente, informar título, saldo em reais e revisões incluídas. A moeda é BRL. O saldo aceita vírgula decimal (ex.: `1500,50`), sem separador de milhar; valores são persistidos como centavos inteiros. Limite: R$ 21.474.836,47 e 0–1000 revisões.
+
+Listas têm busca e **Carregar mais**. Projetos têm filtros Ativos/Arquivados; clique no projeto para consultar detalhes ou arquivar com confirmação. Arquivamento é idempotente e mantém o projeto disponível para consulta. Não há reabertura, edição, exclusão, portal cliente ou ações de arquivos nesta parte; ações futuras devem recusar projetos arquivados.
+
+- `GET/POST /api/v1/clients`: lista/cria clientes; e-mail normalizado e único por workspace.
+- `GET/POST /api/v1/projects`: lista/cria projetos com cliente do mesmo workspace.
+- `GET /api/v1/projects/:id`: detalhes; recursos de outros workspaces retornam 404.
+- `POST /api/v1/projects/:id/archive` com `{}`: arquiva; exige sessão, Origin e CSRF.
+- Listas aceitam `cursor` UUID, `limit` de 1 a 100 (padrão 20) e `search` até 120 caracteres. Projetos também aceitam `status=ACTIVE|ARCHIVED`; sem status, a API inclui ambos. Ordenação estável por UUID crescente; não é ordem cronológica. Ao mudar busca/filtro, descarte o cursor anterior.
+- Migração incremental `20261011000100_clients_projects`: clientes, projetos, chave composta para impedir vínculos entre workspaces e checks de saldo, moeda e revisões. Aplique com `pnpm db:migrate`.
+- OpenAPI e cliente Dart são gerados juntos; o gerador agora contempla parâmetros de rota e query.
+
+## Arquivos privados — marco 2, parte 2
+
+Configure o bucket seguindo [R2 de desenvolvimento](docs/r2-desenvolvimento.md) e aplique `infra/r2-cors.json`. Salve as quatro variáveis R2 somente no `.env` local. Mantenha o bucket privado, sem r2.dev/domínio público. Reinicie a API após mudar a configuração.
+
+Nos detalhes de um projeto ativo, **Nova versão** cria um rascunho numerado. **Enviar arquivo** seleciona o arquivo, mostra progresso e envia partes diretamente ao R2. Falhas permitem tentar novamente sem reenviar partes já confirmadas enquanto o diálogo estiver aberto. **Cancelar envio** aborta o multipart; se a rede falhar, a limpeza fica registrada no banco. Fechar/recarregar não retoma automaticamente o envio: cancele o pendente e selecione o arquivo de novo. **Baixar original** só aparece para arquivo validado de projeto ativo.
+
+Limites iniciais: 2 GiB/arquivo, 10 GiB/workspace, 5 envios simultâneos, 100 registros de arquivo por versão. Formatos PNG, JPEG, WebP, PDF, MP4, MP3, WAV e ZIP; editáveis devem vir em ZIP. Assinatura de formato não substitui antivírus. Apenas o criador autenticado pode baixar os próprios originais; acesso de convidados e publicação não fazem parte desta entrega.
+
+- `GET /storage`: configuração disponível e uso/reserva da cota do workspace.
+- `GET/POST /projects/:id/versions`: lista paginada/cria rascunho numerado.
+- `POST /versions/:id/uploads`: reserva a cota e inicia multipart.
+- `POST /uploads/:id/parts`: URLs de partes com número/tamanho vinculados à assinatura, válidas por 5 minutos.
+- `POST /uploads/:id/complete`: verifica partes/ETags, metadados, tamanho real e assinatura inicial do formato; READY apenas após validação. Repetição com mesmas partes é idempotente.
+- `GET /uploads/:id`: consulta segura do estado; sem objectKey, multipartId ou credenciais.
+- `DELETE /uploads/:id` com `{}`: retorna o estado final ou ABORTING se a limpeza aguardar retry; 200 em vez de 204 para informar a pendência.
+- `POST /assets/:id/download` com `{}`: URL attachment de 60 segundos, somente para criador autenticado e projeto ativo.
+
+Mutations exigem JSON, sessão, Origin e CSRF. Projetos com envios/limpeza pendentes não podem ser arquivados. Uploads expiram em 24 horas; a API reprocessa limpeza persistida a cada minuto. Dados e cota permanecem reservados até a limpeza ser confirmada.
+
+Após configurar o bucket, execute `pnpm storage:check`. Esse comando envia um objeto descartável de aproximadamente 8 MiB, confere multipart, CORS/ETag, tamanho assinado, HEAD, Range e acesso privado, e remove somente o objeto do próprio teste. Em falha de limpeza, o próximo check retoma pelo registro `.local/r2-smoke-state.json`. O teste não usa arquivos ou registros de clientes. Upload/download/cancelamento foram conferidos pelo responsável no navegador com R2 real em 13/10/2026; testes com adapter simulado não comprovam compatibilidade com o provedor.
 
 ## Segurança e decisões
 
@@ -170,13 +205,13 @@ O script cria/inicia um cluster separado na porta 5433, define as credenciais so
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/postgres-local.ps1 stop -TestDatabase
 ```
 
-O runner recusa hosts externos, porta diferente de 5433 ou banco diferente de cofre_test; cria um schema UUID exclusivo, aplica migrations e só então roda a suíte. Não executa reset, drop ou truncate. Schemas são preservados no cluster de teste para diagnóstico; não usa o banco de desenvolvimento. Para outro ambiente nativo, configure explicitamente `TEST_DATABASE_URL` para localhost:5433/cofre_test antes de executar `pnpm test:integration`.
+O runner recusa hosts externos, porta diferente de 5433 ou banco diferente de cofre_test; cria um schema UUID exclusivo por suíte, aplica migrations e só então roda os cenários. Assim, um worker simulado não consome arquivos de outra suíte. Não executa reset, drop ou truncate. Schemas são preservados no cluster de teste para diagnóstico; não usa o banco de desenvolvimento. Para outro ambiente nativo, configure explicitamente `TEST_DATABASE_URL` para localhost:5433/cofre_test antes de executar `pnpm test:integration`.
 
 A suíte cobre cadastro/login/me/logout, e-mail duplicado e concorrente, senha incorreta, sessão expirada/revogada, membership ausente, CSRF/Origin, duas contas isoladas e rate limit. Os testes Flutter usam serviço fake para formulários/navegação e MockClient para transporte; não comprovam o fluxo browser + PostgreSQL ponta a ponta. Consulte o estado executado em [docs/progress.md](docs/progress.md).
 
 ## Alternar PCs via Git (Windows/Linux)
 
-A validação no segundo PC está **adiada**. Quando retomada:
+Segundo PC Windows preparado em 11/10/2026. Para novos computadores:
 
 1. Clone o repositório privado do GitHub autenticado como colaborador.
 2. Instale as versões fixadas e execute `pnpm install --frozen-lockfile`.
@@ -190,6 +225,7 @@ Consulte [CONTRIBUTING.md](CONTRIBUTING.md) para branches, revisão e checks.
 
 ```text
 apps/api/          API Nest, DTOs, guards, serviços e testes
+apps/media_worker/ renderizador Python de imagens/PDF com limites nativos
 apps/flutter_app/  UI pt-BR, serviços, estado, rotas e testes
 packages/database/ schema Prisma, migration e cliente TS
 packages/contracts/OpenAPI versionado
@@ -197,3 +233,9 @@ infra/             documentação da infraestrutura nativa
 scripts/           geração Dart e runner de integração
 docs/              decisões, fontes e estado dos checks
 ```
+
+## Prévias privadas para o criador
+
+PNG/JPEG/WebP e PDF têm derivados JPEG separados, com marca d’água nos pixels. A interface oferece **Ver prévia**, navegação de páginas e retry; não usa original como fallback. Worker Node separado com fila persistente no PostgreSQL, reserva de cota e limpeza após falhas. Configure `MEDIA_PYTHON` e execute `pnpm media:worker`; detalhes e limites em [docs/previas-desenvolvimento.md](docs/previas-desenvolvimento.md).
+
+O teste direto no R2 real passou para PNG/PDF; o responsável confirmou o novo visualizador no navegador em 13/10/2026. Vídeo/áudio, prévia manual de ZIP, análise de malware e portal de convidados ficam para as próximas partes. Os limites do parser são contenção de recursos, sem sandbox completa de filesystem/rede; não abrir este fluxo para arquivos externos antes desse gate.
