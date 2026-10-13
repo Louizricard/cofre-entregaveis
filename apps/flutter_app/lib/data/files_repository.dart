@@ -8,6 +8,7 @@ abstract interface class FilesRepository {
   Future<StorageView> storage();
   Future<VersionsView> versions(String projectId, {String? cursor});
   Future<VersionView> createVersion(String projectId);
+  Future<VersionView> publish(String versionId, int revision);
   Future<UploadView> start(String versionId, StartUploadDto input);
   Future<SignedPartsView> parts(String id, List<int> numbers);
   Future<AssetView> complete(String id, List<PartDto> parts);
@@ -30,6 +31,12 @@ final filesRepositoryProvider = Provider<FilesRepository>((ref) {
 class HttpFilesRepository implements FilesRepository {
   final CofreClient api;
   const HttpFilesRepository(this.api);
+  @override
+  Future<VersionView> publish(String versionId, int revision) =>
+      api.filespublish(
+        PublishVersionDto(expectedProjectRevision: revision),
+        versionId,
+      );
   @override
   Future<PreviewStateView> retryScan(String id) =>
       api.filesscanRetry(const EmptyDto(), id);

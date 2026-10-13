@@ -62,20 +62,42 @@ export class FilesService implements OnModuleInit, OnModuleDestroy {
  async createVersion(workspaceId: string, projectId: string) {
   return serial(this.db, async tx => {
    await this.activeProject(tx, workspaceId, projectId);
+   const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
    const last = await tx.projectVersion.findFirst({ where: { projectId, workspaceId }, orderBy: { number: 'desc' } });
    const v = await tx.projectVersion.create({ data: { workspaceId, projectId, number: (last?.number ?? 0) + 1 } });
-   return { id: v.id, number: v.number, state: 'DRAFT', createdAt: v.createdAt, assets: [] };
+   return { id: v.id, number: v.number, state: v.state, projectRevision: project.revision, createdAt: v.createdAt, assets: [] };
   });
  }
  async versions(workspaceId: string, projectId: string, query: ListQuery) {
-  if (!await this.db.project.findFirst({ where: { id: projectId, workspaceId }, select: { id: true } })) throw missing();
+  const project = await this.db.project.findFirst({ where: { id: projectId, workspaceId } });
+  if (!project) throw missing();
   const cursor = query.cursor ? await this.db.projectVersion.findFirst({ where: { id: query.cursor, projectId, workspaceId } }) : null;
   if (query.cursor && !cursor) throw new BadRequestException({ code: 'INVALID_CURSOR', message: 'Paginação inválida.' });
   const limit = query.limit ?? 20;
   const rows = await this.db.projectVersion.findMany({ where: { projectId, workspaceId, ...(cursor ? { number: { gt: cursor.number } } : {}) },
    orderBy: { number: 'asc' }, take: limit + 1, include: { assets: { orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] } } });
-  return { items: rows.slice(0, limit).map(v => ({ id: v.id, number: v.number, state: 'DRAFT', createdAt: v.createdAt, assets: v.assets.map(view) })),
+  return { items: rows.slice(0, limit).map(v => ({ id: v.id, number: v.number, state: v.state, projectRevision: project.revision, createdAt: v.createdAt, assets: v.assets.map(view) })),
    nextCursor: rows.length > limit ? rows[limit - 1].id : null };
+ }
+ async publish(workspaceId: string, userId: string, id: string, expectedProjectRevision: number) {
+  return serial(this.db, async tx => {
+   const version = await tx.projectVersion.findFirst({ where: { id, workspaceId }, include: { project: true, assets: { include: { mediaJob: true } } } });
+   if (!version) throw missing();
+   if (version.project.status !== 'ACTIVE') throw conflict('PROJECT_ARCHIVED', 'Projeto arquivado.');
+   if (version.state !== 'DRAFT') throw conflict('VERSION_IMMUTABLE', 'Esta versão já foi publicada.');
+   if (version.project.revision !== expectedProjectRevision) throw conflict('PROJECT_CHANGED', 'O projeto mudou. Atualize os arquivos antes de publicar.');
+   const current = await tx.projectVersion.findFirst({ where: { projectId: version.projectId, state: 'PUBLISHED' } });
+   if (current && current.number >= version.number) throw conflict('VERSION_OUTDATED', 'Publique uma versão mais recente que a atual.');
+   if (version.assets.some(a => !['READY', 'ABORTED', 'FAILED'].includes(a.status))) throw conflict('UPLOAD_PENDING', 'Conclua ou cancele os envios antes de publicar.');
+   const files = version.assets.filter(a => a.status === 'READY');
+   if (!files.length) throw conflict('VERSION_EMPTY', 'Envie ao menos um arquivo antes de publicar.');
+   if (files.some(a => !cleanScan(a))) throw conflict('SECURITY_SCAN_REQUIRED', 'Aguarde a análise de segurança de todos os arquivos.');
+   if (files.some(a => previewSupported(a.mime) && a.mediaJob?.state !== 'READY')) throw conflict('PREVIEW_NOT_READY', 'Aguarde as prévias ou reprocesse as falhas antes de publicar.');
+   await tx.project.update({ where: { id: version.projectId }, data: { revision: { increment: 1 } } });
+   await tx.projectVersion.updateMany({ where: { projectId: version.projectId, state: 'PUBLISHED' }, data: { state: 'SUPERSEDED' } });
+   const result = await tx.projectVersion.update({ where: { id }, data: { state: 'PUBLISHED', publishedAt: new Date(), publishedById: userId } });
+   return { id, number: result.number, state: result.state, projectRevision: expectedProjectRevision + 1, createdAt: result.createdAt, assets: version.assets.map(view) };
+  });
  }
  private async get(workspaceId: string, id: string) {
   const a = await this.db.asset.findFirst({ where: { id, workspaceId }, include: assetInclude });
@@ -112,6 +134,7 @@ export class FilesService implements OnModuleInit, OnModuleDestroy {
   const a = await serial(this.db, async tx => {
    const version = await tx.projectVersion.findFirst({ where: { id: versionId, workspaceId } });
    if (!version) throw missing();
+   if (version.state !== 'DRAFT') throw conflict('VERSION_IMMUTABLE', 'Esta versão foi publicada. Crie uma nova versão para enviar arquivos.');
    await this.activeProject(tx, workspaceId, version.projectId);
    const w = await tx.workspace.findUniqueOrThrow({ where: { id: workspaceId } });
    if (w.activeUploads >= 5) throw conflict('UPLOAD_LIMIT', 'Há cinco envios em andamento. Aguarde ou cancele um deles.');

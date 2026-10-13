@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'application/session.dart';
 import 'presentation/screens.dart';
+import 'presentation/guest_portal.dart';
 
 void main() => runApp(const ProviderScope(child: CofreApp()));
 
@@ -17,6 +18,9 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     refreshListenable: refresh,
     redirect: (_, route) {
+      if (route.matchedLocation == '/portal' ||
+          route.matchedLocation.startsWith('/s/'))
+        return null;
       final phase = ref.read(sessionProvider).phase;
       final path = route.matchedLocation;
       if (phase == SessionPhase.checking || phase == SessionPhase.failed) {
@@ -28,6 +32,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       return path == '/dashboard' ? null : '/dashboard';
     },
     routes: [
+      GoRoute(
+        path: '/s/:token',
+        builder: (_, route) =>
+            GuestEntryScreen(token: route.pathParameters['token']!),
+      ),
+      GoRoute(path: '/portal', builder: (_, __) => const GuestPortalScreen()),
       GoRoute(path: '/', builder: (_, __) => const SplashScreen()),
       GoRoute(
         path: '/login',

@@ -25,6 +25,7 @@ export class MediaService {
   await serial(this.db, async tx => {
    const asset = await tx.asset.findFirst({ where: { id, workspaceId }, include: { version: { include: { project: true } } } });
    if (!asset) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Registro não encontrado.' });
+   if (asset.version.state !== 'DRAFT') throw new ConflictException({ code: 'VERSION_IMMUTABLE', message: 'A prévia manual de uma versão publicada não pode ser alterada.' });
    if (asset.status !== 'READY' || asset.mime !== 'application/zip') throw new ConflictException({ code: 'MANUAL_PREVIEW_TARGET', message: 'A prévia manual requer um ZIP com envio concluído.' });
    if (asset.version.project.status !== 'ACTIVE') throw new ConflictException({ code: 'PROJECT_ARCHIVED', message: 'Projeto arquivado.' });
    if (!cleanScan(asset)) throw new ConflictException({ code: 'SECURITY_SCAN_REQUIRED', message: 'Aguarde a análise de segurança do ZIP.' });

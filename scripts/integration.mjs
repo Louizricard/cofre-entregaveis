@@ -18,7 +18,7 @@ run(['db:generate']);
 run(['build']);
 // Workers intentionally consume the whole queue. Each suite needs its own schema,
 // otherwise a fake worker can consume another suite's uploads and corrupt its quotas.
-for (const suite of ['auth', 'projects', 'files', 'media']) {
+for (const suite of ['auth', 'projects', 'files', 'media', 'publication', 'sharing']) {
  url.searchParams.set('schema', 'cofre_test_' + randomUUID().replaceAll('-', ''));
  const testEnv = { ...env, DATABASE_URL: url.href, TEST_DATABASE_URL: url.href };
  run(['db:migrate'], testEnv);
