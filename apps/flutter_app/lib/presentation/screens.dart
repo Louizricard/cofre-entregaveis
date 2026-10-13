@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../application/session.dart';
 import '../data/auth_repository.dart';
 import '../generated/api.g.dart';
+import 'projects.dart';
 
 class SplashScreen extends ConsumerWidget {
   const SplashScreen({super.key});
@@ -330,7 +331,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget build(BuildContext context) {
     final identity = ref.watch(sessionProvider).identity;
     if (identity == null) return const SplashScreen();
-    final projects = ref.watch(projectsProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Cofre de Entregáveis'),
@@ -361,62 +361,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     'Olá, ${identity.user.name}. Este é seu espaço de trabalho.',
                   ),
                   const SizedBox(height: 32),
-                  if (_error != null)
-                    Semantics(
-                      liveRegion: true,
-                      child: Text(
-                        _error!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
-                    ),
-                  Card(
-                    elevation: 0,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 56,
-                      ),
-                      child: projects.when(
-                        loading: () => const Center(
-                          child: CircularProgressIndicator(
-                            semanticsLabel: 'Carregando projetos',
-                          ),
-                        ),
-                        error: (error, _) => Column(
-                          children: [
-                            Text(
-                              error is ApiFailure
-                                  ? error.message
-                                  : 'Não foi possível carregar o workspace.',
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-                            OutlinedButton(
-                              onPressed: () => ref.invalidate(projectsProvider),
-                              child: const Text('Tentar novamente'),
-                            ),
-                          ],
-                        ),
-                        data: (_) => Column(
-                          children: [
-                            const Icon(Icons.folder_outlined, size: 56),
-                            const SizedBox(height: 20),
-                            Text(
-                              'Um novo começo.',
-                              style: Theme.of(context).textTheme.headlineSmall,
-                            ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Seu workspace está pronto.\nAinda não há projetos por aqui.',
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                  if (_error != null) FailureNotice(_error!),
+                  WorkspaceContent(key: ValueKey(identity.workspace.id)),
                 ],
               ),
             ),

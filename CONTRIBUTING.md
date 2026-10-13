@@ -39,4 +39,4 @@ Migrations são incrementais. Não altere migrations aplicadas, não use db push
 
 ## Outro PC
 
-O teste no segundo PC foi adiado pelo responsável. Quando retomado, clone do GitHub, instale as versões fixadas, crie uma .env própria e inicialize um PostgreSQL local separado. Git sincroniza código, não dados nem credenciais.
+O segundo PC Windows foi preparado e validado em 11/10/2026. Para outro PC, clone do GitHub, instale as versões fixadas, crie uma .env própria e inicialize um PostgreSQL local separado. Git sincroniza código, não dados nem credenciais.

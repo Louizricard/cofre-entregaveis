@@ -5,6 +5,9 @@ import 'package:cofre_app/main.dart';
 import 'package:cofre_app/application/session.dart';
 import 'package:cofre_app/data/auth_repository.dart';
 import 'package:cofre_app/generated/api.g.dart';
+import 'package:cofre_app/data/files_repository.dart';
+
+import 'fake_files.dart';
 
 const identity = IdentityView(
   user: UserView(id: 'user-a', name: 'Ana', email: 'ana@example.com'),
@@ -12,6 +15,11 @@ const identity = IdentityView(
 );
 
 class FakeAuth implements AuthRepository {
+  final clientItems = <ClientView>[];
+  final projectItems = <ProjectView>[];
+  bool failList = false;
+  bool failSave = false;
+  bool failArchive = false;
   bool signedIn;
   bool failLogin = false;
   bool failRestore = false;
@@ -46,8 +54,69 @@ class FakeAuth implements AuthRepository {
   }
 
   @override
-  Future<ProjectsView> projects() async =>
-      const ProjectsView(items: [], nextCursor: null);
+  Future<ProjectsView> projects({
+    String? cursor,
+    String? search,
+    String? status,
+  }) async {
+    if (failList) throw const ApiFailure(0, 'Sem conexão');
+    return ProjectsView(
+      items: projectItems
+          .where(
+            (p) =>
+                (status == null || p.status == status) &&
+                (search == null || p.title.contains(search)),
+          )
+          .toList(),
+      nextCursor: null,
+    );
+  }
+
+  @override
+  Future<ClientsView> clients({String? cursor, String? search}) async =>
+      ClientsView(items: clientItems, nextCursor: null);
+  @override
+  Future<ClientView> createClient(CreateClientDto input) async {
+    if (failSave)
+      throw const ApiFailure(409, 'Já existe um cliente com este e-mail.');
+    final client = ClientView(
+      id: 'client-${clientItems.length}',
+      name: input.name,
+      email: input.email,
+      createdAt: '2026-10-11T12:00:00Z',
+    );
+    clientItems.add(client);
+    return client;
+  }
+
+  @override
+  Future<ProjectView> createProject(CreateProjectDto input) async {
+    final project = ProjectView(
+      id: 'project-${projectItems.length}',
+      title: input.title,
+      currency: 'BRL',
+      balanceCents: input.balanceCents,
+      includedRevisionRounds: input.includedRevisionRounds,
+      status: 'ACTIVE',
+      client: clientItems.firstWhere((c) => c.id == input.clientId),
+      createdAt: '2026-10-11T12:00:00Z',
+      updatedAt: '2026-10-11T12:00:00Z',
+    );
+    projectItems.add(project);
+    return project;
+  }
+
+  @override
+  Future<ProjectView> project(String id) async =>
+      projectItems.firstWhere((p) => p.id == id);
+  @override
+  Future<ProjectView> archiveProject(String id) async {
+    if (failArchive) throw const ApiFailure(0, 'Sem conexão');
+    final p = await project(id);
+    final updated = ProjectView.fromJson({...p.toJson(), 'status': 'ARCHIVED'});
+    projectItems[projectItems.indexOf(p)] = updated;
+    return updated;
+  }
 }
 
 Future<void> mount(
@@ -61,7 +130,10 @@ Future<void> mount(
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [authRepositoryProvider.overrideWithValue(repo)],
+      overrides: [
+        authRepositoryProvider.overrideWithValue(repo),
+        filesRepositoryProvider.overrideWithValue(FakeFiles()),
+      ],
       child: const CofreApp(),
     ),
   );

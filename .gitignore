@@ -29,3 +29,6 @@ backups/
 pgpass.conf
 .DS_Store
 Thumbs.db
+.pnpm-store/
+__pycache__/
+.venv/

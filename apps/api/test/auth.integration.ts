@@ -60,11 +60,10 @@ test('autenticação integrada com PostgreSQL real e migrations', async t => {
   });
   await t.test('duplicidade concorrente causa 409 sem workspace órfão', async () => {
    assert.equal((await post('/auth/register', input)).status, 409);
-   const before = await server.db.workspace.count();
-   const duplicate = { ...input, email: randomUUID() + '@example.com' };
+   const duplicate = { ...input, email: randomUUID() + '@example.com', workspaceName: 'duplicate-' + randomUUID() };
    const results = await Promise.all([post('/auth/register', duplicate), post('/auth/register', duplicate)]);
    assert.deepEqual(results.map(r => r.status).sort(), [201, 409]);
-   assert.equal(await server.db.workspace.count(), before + 1);
+   assert.equal(await server.db.workspace.count({ where: { name: duplicate.workspaceName } }), 1);
   });
   await t.test('login válido e senha incorreta', async () => {
    const invalid = await post('/auth/login', { email, password: 'uma-senha-incorreta' });

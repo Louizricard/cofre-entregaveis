@@ -6,7 +6,7 @@
     "generate": "prisma generate",
     "migrate": "prisma migrate deploy",
     "validate": "prisma validate",
-    "migration:diff": "prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script",
+    "migration:diff": "prisma migrate diff",
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
