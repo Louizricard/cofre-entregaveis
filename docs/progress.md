@@ -113,7 +113,7 @@ Em 12/10/2026, o responsável ativou o R2. O agente criou o bucket Standard priv
 
 ## Próximo trabalho de produto
 
-Completar prévias manuais de ZIP, isolamento de identidade/filesystem/rede e verificação de malware antes de abrir o portal de revisão/aprovação. Pagamentos continuam em marco posterior.
+Conferir manualmente a prévia de ZIP e os estados da análise de segurança no aplicativo. Depois, implementar o portal de revisão/aprovação com autorização própria e publicação de versões. Pagamentos continuam em marco posterior.
 
 ## Marco de prévias, parte 1 — imagens e PDF (13/10/2026)
 
@@ -140,3 +140,29 @@ Teste real em workspace sintético separado: upload de PNG/PDF → processamento
 Validação: Prisma generate/validate, lint, build/typecheck e contratos passaram; 9 unitários API; 33 testes de integração reportados (29 cenários + 4 pais, PostgreSQL isolado por suíte); 10 testes Python reais, sem skips; 24 testes Flutter, analyze e build Web release passaram. Casos novos cobrem MP4 sem áudio, áudio longo limitado, MP3, fonte acima de 30 min, playlist disfarçada, tipos de derivados e isolamento A/B.
 
 Teste real em workspace sintético separado: MP4 com áudio, MP3 e WAV → worker/FFmpeg → derivados privados no R2. Conferidos MIME/duração/CORS, Range 206, acesso sem assinatura negado e originais idênticos por SHA-256. Reserva zerada; projeto sintético arquivado e sessão encerrada. Um quadro baixado do vídeo foi inspecionado e confirmou a marca; FFprobe confirmou H.264/AAC 1280 × 720. O responsável confirmou a reprodução no navegador em 13/10/2026. Branch desta parte: codex/previas-video-audio, baseada em feat/clientes-projetos. O PR #2 anterior continua aberto; esta entrega depende dele.
+
+## Marco de prévias, parte 3 — prévia manual de ZIP (13/10/2026)
+
+- ZIP/editáveis empacotados podem usar uma imagem/PDF READY da mesma versão como fonte de prévia manual. O original ZIP não é extraído nem usado como fallback: o visualizador resolve somente os derivados processados da fonte.
+- Vínculo persistido em ManualPreview, com FKs compostas por workspace/versão e check impedindo autorreferência. API valida tipo/estado da fonte, sessão, CSRF e projeto ativo; alterações serializam com arquivamento. Pode substituir ou remover o vínculo sem apagar originais/derivados nem duplicar cota.
+- Estado/falha/retry da prévia são encaminhados à fonte. Após remover, o ZIP volta ao estado sem prévia automática. URLs já emitidas continuam válidas por até 60 s.
+- Flutter: Escolher prévia manual no cartão do ZIP; seletor oferece somente imagens/PDF com envio concluído nesta versão. Se não houver fonte, orienta enviá-la antes por Enviar arquivo. A fonte continua como arquivo normal da versão, disponível ao criador.
+
+Checks desta parte: Prisma generate/validate, lint, build/typecheck, contratos e diff check passaram; 9 unitários API; 36 testes de integração reportados (32 cenários + 4 pais), com PostgreSQL isolado; 27 testes Flutter, analyze e build Web release passaram. Parsers não foram alterados nesta parte (10 testes reais passaram na etapa anterior).
+
+Validação real de vínculo/remoção no R2 em workspace sintético separado: ZIP original preservado, prévia aponta para o mesmo derivado marcado do PDF, bytes de uso não se duplicam e remover bloqueia emissão de nova URL. O projeto sintético foi arquivado, sessão encerrada e reserva zerada. A conferência manual no aplicativo pelo responsável ainda está pendente. Branch: codex/previa-manual-zip, baseada na entrega temporal do PR #3; inclui também o marco de segurança descrito abaixo.
+
+
+## Marco de segurança de arquivos (13/10/2026)
+
+- Migration incremental security_scans aplicada ao banco local e aos schemas de testes. Cada original READY, incluindo ZIP e arquivos anteriores, exige análise CLEAN vigente para download, renderização e prévia manual. Original rejeitado permanece privado e contabilizado; não há exclusão automática nem liberação por override.
+- ClamAV LTS 1.4.6 oficial instalado em .tools, com assinaturas oficiais atualizadas e comando explícito pnpm security:update. Base diária até 72 h; análise válida por 24 h. Resultado exige relatório válido, sem erro; arquivos cifrados/limites de inspeção também são rejeitados. Falhas operacionais têm até três tentativas e retry manual; lease abandonado é recuperável.
+- Scanner/Python/FFmpeg executados em AppContainer Windows por tentativa, sem capabilities de rede, com permissões restritas ao runtime dedicado, entrada e saída temporária, além dos recursos padrão Windows/perfil próprio. Job Object é associado antes de liberar o processo suspenso. Ambiente sem credenciais e handles explicitamente limitados. Registro durável permite remover permissões/perfis após crash.
+- Original é vinculado à análise por SHA-256; mudança antes de renderizar invalida a liberação. Scanner limitado a 3 GiB/um processo; renderização a 768 MiB/dois processos, com CPU e timeouts. Linux/outros sistemas falham sem executar parsers desprotegidos; adaptador de isolamento continua pendente para essas plataformas.
+- Flutter oculta download/prévia enquanto aguarda análise ou em bloqueio; erro oferece Repetir análise de segurança. Upload orienta aguardar e atualizar. Nenhum endpoint convidado foi aberto.
+
+Checks: lint, typecheck, Prisma validate, contratos e build API passaram; 9 unitários API e 41 testes de integração PostgreSQL reportados (37 cenários + 4 pais), com schemas isolados; 18 testes Python reais sem skips (10 parsers, 5 AppContainer e 3 scanner); 30 testes Flutter, analyze e build Web release passaram. Detecção foi testada com assinatura sintética inofensiva dentro de ZIP, sem desativar o antivírus do Windows. Atualização oficial de assinaturas passou. API/worker/interface reiniciados; banco isolado de testes encerrado, desenvolvimento preservado.
+
+Validação real HTTP/R2 em dois workspaces sintéticos: PNG, PDF, ZIP, MP4, MP3 e WAV ficaram bloqueados antes da análise e depois receberam CLEAN do ClamAV oficial. Python/FFmpeg produziram derivados no AppContainer; MIME/CORS, Range de áudio/vídeo e acesso sem assinatura negado passaram. Originais idênticos por SHA-256; ZIP compartilhou somente o derivado marcado do PDF sem duplicar cota, e remoção bloqueou nova URL. Reservas zeradas, projetos sintéticos arquivados e sessões de teste encerradas. Nenhuma credencial/cookie/URL assinada registrada.
+
+Guia operacional e limites: [seguranca-arquivos.md](seguranca-arquivos.md). Conferência manual pelo responsável dos estados de segurança e da prévia manual de ZIP ainda pendente. Entrega de prévia manual e segurança na branch codex/previa-manual-zip, baseada em codex/previas-video-audio (PR #3). Envio ao GitHub autorizado pelo responsável; revisão/merge seguem o fluxo de PR.

@@ -107,13 +107,32 @@ model Asset {
  retryAt DateTime @default(now()) @db.Timestamptz(3)
  cleanupAttempts Int @default(0)
  completionHash String? @db.Char(64)
+ scanStatus ScanState @default(PENDING)
+ scannedAt DateTime? @db.Timestamptz(3)
+ scanSha256 String? @db.Char(64)
+ scanDefinitions String? @db.VarChar(40)
+ scanAttempts Int @default(0)
+ scanRetryAt DateTime @default(now()) @db.Timestamptz(3)
+ scanLeaseUntil DateTime? @db.Timestamptz(3)
+ scanLeaseToken String? @db.Uuid
  createdAt DateTime @default(now()) @db.Timestamptz(3)
  updatedAt DateTime @updatedAt @db.Timestamptz(3)
  version ProjectVersion @relation(fields: [workspaceId, versionId], references: [workspaceId, id], onDelete: Restrict)
  mediaJob MediaJob?
+ manualPreview ManualPreview? @relation("PreviewTarget")
+ previewFor ManualPreview[] @relation("PreviewSource")
+ @@unique([workspaceId, versionId, id])
  @@index([workspaceId, versionId, createdAt])
  @@index([status, expiresAt])
  @@index([status, retryAt])
+ @@index([status, scanStatus, scanRetryAt])
+}
+enum ScanState {
+ PENDING
+ RUNNING
+ CLEAN
+ REJECTED
+ ERROR
 }
 enum MediaState {
  PENDING
@@ -121,6 +140,17 @@ enum MediaState {
  READY
  FAILED
  UNSUPPORTED
+}
+model ManualPreview {
+ assetId String @id @db.Uuid
+ workspaceId String @db.Uuid
+ versionId String @db.Uuid
+ sourceAssetId String @db.Uuid
+ updatedAt DateTime @updatedAt @db.Timestamptz(3)
+ asset Asset @relation("PreviewTarget", fields: [workspaceId, versionId, assetId], references: [workspaceId, versionId, id], onDelete: Restrict)
+ source Asset @relation("PreviewSource", fields: [workspaceId, versionId, sourceAssetId], references: [workspaceId, versionId, id], onDelete: Restrict)
+ @@index([sourceAssetId])
+ @@unique([workspaceId, versionId, assetId])
 }
 model MediaJob {
  id String @id @default(uuid()) @db.Uuid

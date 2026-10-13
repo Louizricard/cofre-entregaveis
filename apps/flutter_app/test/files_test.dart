@@ -100,7 +100,7 @@ void main() {
         [4, 8],
         [8, 9],
       ]);
-      expect(find.text('Arquivo enviado e validado.'), findsOneWidget);
+      expect(find.text('Arquivo enviado. Aguarde a análise de segurança e clique em Atualizar.'), findsOneWidget);
       expect(find.textContaining('Original disponível'), findsOneWidget);
       expect(files.used, 9);
       expect(files.reserved, 0);

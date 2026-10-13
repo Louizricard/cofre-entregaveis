@@ -17,6 +17,9 @@ abstract interface class FilesRepository {
   Future<PreviewStateView> previewStatus(String id);
   Future<PreviewStateView> previewRetry(String id);
   Future<PreviewView> preview(String id, int page);
+  Future<PreviewStateView> manualPreview(String id, String sourceId);
+  Future<PreviewStateView> removeManualPreview(String id);
+  Future<PreviewStateView> retryScan(String id);
 }
 
 final filesRepositoryProvider = Provider<FilesRepository>((ref) {
@@ -27,6 +30,15 @@ final filesRepositoryProvider = Provider<FilesRepository>((ref) {
 class HttpFilesRepository implements FilesRepository {
   final CofreClient api;
   const HttpFilesRepository(this.api);
+  @override
+  Future<PreviewStateView> retryScan(String id) =>
+      api.filesscanRetry(const EmptyDto(), id);
+  @override
+  Future<PreviewStateView> manualPreview(String id, String sourceId) =>
+      api.filesmanualPreview(ManualPreviewDto(previewAssetId: sourceId), id);
+  @override
+  Future<PreviewStateView> removeManualPreview(String id) =>
+      api.filesremoveManualPreview(const EmptyDto(), id);
   @override
   Future<PreviewStateView> previewStatus(String id) =>
       api.filespreviewStatus(id);

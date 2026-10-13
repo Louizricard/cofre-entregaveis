@@ -8,6 +8,7 @@ import '../data/files_repository.dart';
 import '../data/upload_file.dart';
 import '../generated/api.g.dart';
 import 'preview.dart';
+import 'manual_preview.dart';
 
 final uploadFilePickerProvider = Provider<Future<UploadFile?> Function()>(
   (ref) => pickUploadFile,
@@ -244,7 +245,7 @@ class _FilesPanelState extends ConsumerState<FilesPanel> {
       _parts.clear();
       if (mounted)
         setState(() {
-          _notice = 'Arquivo enviado e validado.';
+          _notice = 'Arquivo enviado. Aguarde a análise de segurança e clique em Atualizar.';
         });
       await _load();
     } on UploadCancelled {
@@ -328,6 +329,33 @@ class _FilesPanelState extends ConsumerState<FilesPanel> {
         setState(() {
           _error = _message(e);
         });
+    } finally {
+      _setBusy(false);
+    }
+  }
+
+  Future<void> _manualPreview(AssetView asset, List<AssetView> assets) async {
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (_) => ManualPreviewDialog(assets: assets),
+    );
+    if (!mounted || selected == null) return;
+    _setBusy(true);
+    setState(() => _error = null);
+    try {
+      if (selected.isEmpty) {
+        await _repo.removeManualPreview(asset.id);
+      } else {
+        await _repo.manualPreview(asset.id, selected);
+      }
+      if (mounted)
+        setState(
+          () => _notice = selected.isEmpty
+              ? 'Prévia manual removida. Os arquivos continuam nesta versão.'
+              : 'Prévia manual vinculada. Clique em Ver prévia.',
+        );
+    } catch (e) {
+      if (mounted) setState(() => _error = _message(e));
     } finally {
       _setBusy(false);
     }
@@ -524,7 +552,9 @@ class _FilesPanelState extends ConsumerState<FilesPanel> {
                     a.fileName,
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
-                  Text('${byteLabel(a.sizeBytes)} • ${fileStatus(a.status)}'),
+                  Text(
+                    '${byteLabel(a.sizeBytes)} • ${a.status == 'READY' && a.scanStatus != 'CLEAN' ? const {'REJECTED': 'Bloqueado pela análise de segurança', 'ERROR': 'Análise de segurança indisponível', 'PENDING': 'Análise de segurança pendente', 'RUNNING': 'Analisando segurança…'}[a.scanStatus] ?? 'Análise de segurança pendente' : fileStatus(a.status)}',
+                  ),
                   if (a.failureCode != null)
                     const Text(
                       'Selecione o arquivo novamente para iniciar um novo envio.',
@@ -532,7 +562,9 @@ class _FilesPanelState extends ConsumerState<FilesPanel> {
                   Wrap(
                     spacing: 8,
                     children: [
-                      if (a.status == 'READY' && widget.active)
+                      if (a.status == 'READY' &&
+                          a.scanStatus == 'CLEAN' &&
+                          widget.active)
                         TextButton.icon(
                           onPressed: _busy
                               ? null
@@ -546,11 +578,44 @@ class _FilesPanelState extends ConsumerState<FilesPanel> {
                           icon: const Icon(Icons.visibility),
                           label: const Text('Ver prévia'),
                         ),
-                      if (a.status == 'READY' && widget.active)
+                      if (a.status == 'READY' &&
+                          a.scanStatus == 'CLEAN' &&
+                          a.mime == 'application/zip' &&
+                          widget.active)
+                        TextButton.icon(
+                          onPressed: _busy
+                              ? null
+                              : () => _manualPreview(a, assets),
+                          icon: const Icon(Icons.attach_file),
+                          label: const Text('Escolher prévia manual'),
+                        ),
+                      if (a.status == 'READY' &&
+                          a.scanStatus == 'CLEAN' &&
+                          widget.active)
                         TextButton.icon(
                           onPressed: _busy ? null : () => _download(a),
                           icon: const Icon(Icons.download),
                           label: const Text('Baixar original'),
+                        ),
+                      if (a.status == 'READY' &&
+                          a.scanStatus == 'ERROR' &&
+                          widget.active)
+                        TextButton(
+                          onPressed: _busy
+                              ? null
+                              : () async {
+                                  _setBusy(true);
+                                  try {
+                                    await _repo.retryScan(a.id);
+                                    await _load();
+                                  } catch (e) {
+                                    if (mounted)
+                                      setState(() => _error = _message(e));
+                                  } finally {
+                                    _setBusy(false);
+                                  }
+                                },
+                          child: const Text('Repetir análise de segurança'),
                         ),
                       if (!['READY', 'FAILED', 'ABORTED'].contains(a.status))
                         TextButton(
