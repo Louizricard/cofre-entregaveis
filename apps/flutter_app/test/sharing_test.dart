@@ -42,6 +42,32 @@ class FakeSharing implements SharingRepository {
 }
 
 class FakeGuest implements GuestRepository {
+  bool identityEnabled = false;
+  bool identityVerified = false;
+  bool failIdentity = false;
+  final identityEmails = <String>[];
+  final identityCodes = <String>[];
+  @override
+  Future<IdentityStatusView> identityStatus() async =>
+      IdentityStatusView(enabled: identityEnabled, verified: identityVerified);
+  @override
+  Future<IdentityRequestView> requestIdentity(String email) async {
+    if (failIdentity) throw const ApiFailure(503, 'Envio indisponível.');
+    identityEmails.add(email);
+    return const IdentityRequestView(
+      message: 'Se o e-mail corresponder ao cadastro, você receberá um código.',
+    );
+  }
+
+  @override
+  Future<IdentityStatusView> verifyIdentity(String code) async {
+    identityCodes.add(code);
+    if (code != '012345')
+      throw const ApiFailure(400, 'Código inválido ou expirado.');
+    identityVerified = true;
+    return IdentityStatusView(enabled: identityEnabled, verified: true);
+  }
+
   final tokens = <String>[];
   bool denied = false;
   bool ended = false;

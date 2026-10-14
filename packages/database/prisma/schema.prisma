@@ -245,6 +245,44 @@ model GuestSession {
  expiresAt DateTime @db.Timestamptz(3)
  revokedAt DateTime? @db.Timestamptz(3)
  createdAt DateTime @default(now()) @db.Timestamptz(3)
+ verifiedAt DateTime? @db.Timestamptz(3)
+ verifiedEmail String? @db.VarChar(254)
+ challenge IdentityChallenge?
+ identityRequests IdentityRequest[]
  share ShareLink @relation(fields: [shareId], references: [id], onDelete: Restrict)
  @@index([shareId, expiresAt])
+}
+
+enum IdentityDeliveryState {
+ PENDING
+ RUNNING
+ SENT
+ FAILED
+ CANCELLED
+}
+model IdentityChallenge {
+ id String @id @default(uuid()) @db.Uuid
+ sessionId String @unique @db.Uuid
+ email String @db.VarChar(254)
+ codeHash String @db.Char(64)
+ encryptedCode String?
+ expiresAt DateTime @db.Timestamptz(3)
+ consumedAt DateTime? @db.Timestamptz(3)
+ attempts Int @default(0)
+ deliveryState IdentityDeliveryState @default(PENDING)
+ deliveryAttempts Int @default(0)
+ nextAttemptAt DateTime @default(now()) @db.Timestamptz(3)
+ leaseUntil DateTime? @db.Timestamptz(3)
+ leaseToken String? @db.Uuid
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ session GuestSession @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+ @@index([deliveryState, nextAttemptAt])
+}
+model IdentityRequest {
+ id String @id @default(uuid()) @db.Uuid
+ sessionId String @db.Uuid
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ session GuestSession @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+ @@index([sessionId, createdAt])
+ @@index([createdAt])
 }

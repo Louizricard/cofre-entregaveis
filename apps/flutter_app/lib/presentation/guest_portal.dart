@@ -6,6 +6,7 @@ import '../data/auth_repository.dart';
 import '../data/sharing_repository.dart';
 import '../generated/api.g.dart';
 import 'preview.dart';
+import 'guest_identity.dart';
 
 class GuestEntryScreen extends ConsumerStatefulWidget {
   final String token;
@@ -220,6 +221,8 @@ class _GuestPortalScreenState extends ConsumerState<GuestPortalScreen> {
                 const Text(
                   'Visualize as prévias abaixo. Os originais permanecem protegidos.',
                 ),
+                const SizedBox(height: 16),
+                const GuestIdentityPanel(),
                 const SizedBox(height: 20),
                 DropdownButtonFormField<String>(
                   key: ValueKey(_version?.id),

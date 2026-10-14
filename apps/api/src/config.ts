@@ -3,7 +3,8 @@ import { fileURLToPath } from 'node:url';
 dotenv({ path: fileURLToPath(new URL('../../../../.env', import.meta.url)), quiet: true });
 // Source tooling and compiled entrypoints also accept environment variables directly.
 export interface StorageSettings { accountId: string; bucket: string; accessKeyId: string; secretAccessKey: string }
-export interface Settings { databaseUrl: string; origin: string; production: boolean; sessionDays: number; port: number; storage?: StorageSettings }
+export interface EmailSettings { apiKey: string; from: string; identityKey: string }
+export interface Settings { databaseUrl: string; origin: string; production: boolean; sessionDays: number; port: number; storage?: StorageSettings; email?: EmailSettings }
 export function settings(): Settings {
  const origin = process.env.APP_ORIGIN ?? 'http://localhost:8080';
  const parsed = new URL(origin);
@@ -24,7 +25,16 @@ export function settings(): Settings {
   if (!/^[a-f0-9]{32}$/i.test(accountId) || !/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/.test(bucket)) throw new Error('Conta ou bucket R2 inválido.');
   storage = { accountId, bucket, accessKeyId, secretAccessKey };
  }
- return { origin, production, databaseUrl, sessionDays, port, storage };
+ const emailValues = [process.env.RESEND_API_KEY, process.env.EMAIL_FROM, process.env.IDENTITY_SECRET];
+ let email: EmailSettings | undefined;
+ if (emailValues.some(v => !!v)) {
+  if (emailValues.some(v => !v)) throw new Error('Preencha RESEND_API_KEY, EMAIL_FROM e IDENTITY_SECRET juntos.');
+  const [apiKey, from, identityKey] = emailValues as string[];
+  if (!/^re_[A-Za-z0-9_-]+$/.test(apiKey) || !/^[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+$/.test(from) || !/^[a-f0-9]{64}$/i.test(identityKey)) throw new Error('Configuração de e-mail inválida; use remetente simples e segredo aleatório hexadecimal de 32 bytes.');
+  if (production && from.toLowerCase().endsWith('@resend.dev')) throw new Error('Produção exige remetente com domínio próprio verificado.');
+  email = { apiKey, from, identityKey };
+ }
+ return { origin, production, databaseUrl, sessionDays, port, storage, email };
 }
 export const SETTINGS = Symbol('SETTINGS');
 export const DATABASE = Symbol('DATABASE');

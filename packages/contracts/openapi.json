@@ -3766,6 +3766,89 @@
           "guest"
         ]
       }
+    },
+    "/api/v1/guest/identity": {
+      "get": {
+        "operationId": "IdentityController_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityStatusView"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "guest-identity"
+        ]
+      }
+    },
+    "/api/v1/guest/identity/request": {
+      "post": {
+        "operationId": "IdentityController_request",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdentityRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityRequestView"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "guest-identity"
+        ]
+      }
+    },
+    "/api/v1/guest/identity/verify": {
+      "post": {
+        "operationId": "IdentityController_verify",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdentityVerifyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityStatusView"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "guest-identity"
+        ]
+      }
     }
   },
   "info": {
@@ -4791,6 +4874,57 @@
         },
         "required": [
           "page"
+        ]
+      },
+      "IdentityStatusView": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "verified": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "enabled",
+          "verified"
+        ]
+      },
+      "IdentityRequestDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "IdentityRequestView": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "IdentityVerifyDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[0-9]{6}$"
+          }
+        },
+        "required": [
+          "code"
         ]
       }
     }
