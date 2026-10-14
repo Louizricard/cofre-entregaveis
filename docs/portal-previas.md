@@ -28,4 +28,4 @@ Neste PC, copie o link em **Compartilhar prévias** e abra em uma guia anônima.
 
 Testes PostgreSQL cobrem workspace/projeto distintos, rascunhos ocultos, ausência de chaves originais, CSRF, validade, rotação/expiração de sessão, revogação durante assinatura, arquivamento, rate limit e criação concorrente no limite de dez links. Flutter verifica criação/cópia/revogação, segredo exibido uma vez, troca da rota/histórico antes do bootstrap, visualizador sem retry privilegiado, histórico e encerramento em 360/768/1440 px. O responsável confirmou o funcionamento do portal e dos testes manuais orientados após a validação automatizada.
 
-Identidade por código de e-mail é necessária antes de comentários/aprovação conforme o PRD. Esta fase concede somente leitura de prévias a quem possui o link; não afirma identidade do visitante.
+Identidade por código de e-mail é necessária antes de comentários/aprovação conforme o PRD. A etapa seguinte implementou esse fluxo, descrito em [identidade-cliente.md](identidade-cliente.md), mas ainda aguarda configuração e teste do remetente real. Possuir o link concede somente leitura de prévias; não afirma identidade do visitante.

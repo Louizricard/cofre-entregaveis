@@ -113,7 +113,7 @@ Em 12/10/2026, o responsável ativou o R2. O agente criou o bucket Standard priv
 
 ## Próximo trabalho de produto
 
-Publicação foi confirmada manualmente pelo responsável. Portal de prévias e revogação confirmados manualmente pelo responsável. Compartilhamento está implementado; a próxima parte é identidade confirmada por e-mail antes de comentários, rodadas de revisão e aprovação. Pagamentos seguem em marco posterior.
+Publicação, portal de prévias e revogação foram confirmados manualmente pelo responsável. Confirmação de e-mail validada com testes automatizados e recebimento real no próprio endereço da conta Resend. Próxima etapa: comentários, rodadas e aprovação; envio a clientes externos depende de domínio verificado. Pagamentos seguem em marco posterior.
 
 ## Marco de prévias, parte 1 — imagens e PDF (13/10/2026)
 
@@ -196,3 +196,17 @@ Checks: lint, typecheck, Prisma generate/validate, build API e contratos passara
 Teste real HTTP/R2 em workspace sintético: PNG/PDF/ZIP enviados e analisados; ZIP recebeu vínculo manual de PDF antes da publicação. Sessão convidada recebeu somente metadados seguros e JPEGs privados dos três arquivos. Rascunho novo retornou 404, tentativa de download original retornou 401, R2 sem assinatura negou acesso e revogação bloqueou consulta/bootstrap. Sessão do criador preservada, reserva zerada, projeto sintético arquivado e sessão encerrada. API/worker/Flutter atualizados em execução; banco isolado de testes encerrado.
 
 Guia: [portal-previas.md](portal-previas.md). O responsável confirmou que o portal e os testes manuais orientados funcionaram corretamente. Branch local codex/publicacao-versoes inclui publicação e compartilhamento, com envio ao GitHub autorizado pelo responsável. Próximo trabalho: identidade por código de e-mail antes da colaboração; preparar envio transacional de e-mail sem registrar códigos em claro.
+
+
+## Marco do portal, parte 3 — confirmação de e-mail (14/10/2026)
+
+- Endpoints de estado, solicitação e verificação exigem sessão convidada válida, origem/CSRF nas mutations e rate limit. Somente o e-mail normalizado cadastrado no cliente gera desafio; resposta 202 é genérica para correspondência, cooldown e cota. Sem configuração de remetente, envio é desabilitado e não há confirmação falsa.
+- Código aleatório de seis dígitos, válido por até dez minutos/sessão/link, uso único e cinco tentativas persistidas. HMAC vincula código ao desafio/sessão, com chave externa ao banco. Reenvio invalida desafio e evita repetir os dígitos anteriores. Verificação registra horário/e-mail na sessão; mudança de e-mail, revogação, expiração e arquivamento invalidam uso dessa identidade.
+- IdentityChallenge também é fila persistente de envio; código pendente cifrado AES-256-GCM, sem texto aberto no banco/respostas/logs. API consome em ciclos de dois segundos, lease de três minutos e até três tentativas; idempotência por desafio, timeout HTTP de quinze segundos, limpeza de cifra em sucesso/falha definitiva/cancelamento. IdentityRequest mantém sessão/horário para cooldown de um minuto e dez pedidos/hora/projeto, incluindo e-mails diferentes.
+- Adapter Resend com endpoint fixo, credencial apenas no ambiente do servidor e erros genéricos. Configuração exige RESEND_API_KEY, EMAIL_FROM simples e IDENTITY_SECRET aleatório hexadecimal de 32 bytes juntos; produção recusa remetente resend.dev. Não há modo de logar códigos ou adapter simulado habilitável na aplicação.
+- Flutter: formulário, resposta genérica, código com zero inicial, cooldown, erros e estado confirmado. Sem serviço, explica indisponibilidade e mantém as prévias. Comentários, aprovação e download convidado continuam protegidos/ausentes.
+- Migration incremental guest_identity aplicada em schemas isolados e no banco local. Branch codex/identidade-cliente baseada na main após PR #5. Envio ao GitHub autorizado pelo responsável. Conta Resend criada pelo responsável e teste real confirmado posteriormente, conforme registro abaixo.
+
+Checks: lint, typecheck, Prisma generate/validate, build API e contratos passaram; 11 unitários API e 75 testes de integração reportados (68 cenários + 7 pais), com PostgreSQL isolado por suíte. Remetente simulado somente em memória; casos incluem cinco erros persistidos, uso único/sessão, expiração/reenvio, retries/lease, cota concorrente, e-mail alterado/revogação/arquivamento e modo desabilitado. Flutter: 50 testes, analyze e build Web release sem CDN passaram, incluindo formulário em 360/768/1440 px. Parsers/R2 não foram alterados. Os testes automatizados não contatam o provedor; a entrega real foi confirmada posteriormente pelo responsável.
+
+O responsável criou a conta Resend, salvou a chave somente no .env local e configurou remetente de teste. Em 14/10/2026, criou cliente/projeto sintéticos, publicou uma versão e confirmou recebimento e uso do código no portal: “E-mail confirmado neste acesso”. O teste real foi no próprio endereço da conta, sem domínio próprio. Guia: [identidade-cliente.md](identidade-cliente.md). O gate de recebimento real desta etapa foi confirmado pelo responsável. Envio para clientes externos ainda exige domínio próprio verificado.

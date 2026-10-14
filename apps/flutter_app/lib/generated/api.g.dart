@@ -778,6 +778,54 @@ class GuestPreviewDto {
   };
 }
 
+class IdentityStatusView {
+  final bool enabled;
+  final bool verified;
+  const IdentityStatusView({required this.enabled, required this.verified});
+  factory IdentityStatusView.fromJson(Map<String, dynamic> json) => IdentityStatusView(
+    enabled: json['enabled'] as bool,
+    verified: json['verified'] as bool,
+  );
+  Map<String, dynamic> toJson() => {
+    'enabled': enabled,
+    'verified': verified,
+  };
+}
+
+class IdentityRequestDto {
+  final String email;
+  static const emailMaxLength = 254;
+  const IdentityRequestDto({required this.email});
+  factory IdentityRequestDto.fromJson(Map<String, dynamic> json) => IdentityRequestDto(
+    email: json['email'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'email': email,
+  };
+}
+
+class IdentityRequestView {
+  final String message;
+  const IdentityRequestView({required this.message});
+  factory IdentityRequestView.fromJson(Map<String, dynamic> json) => IdentityRequestView(
+    message: json['message'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'message': message,
+  };
+}
+
+class IdentityVerifyDto {
+  final String code;
+  const IdentityVerifyDto({required this.code});
+  factory IdentityVerifyDto.fromJson(Map<String, dynamic> json) => IdentityVerifyDto(
+    code: json['code'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'code': code,
+  };
+}
+
 typedef JsonTransport = Future<dynamic> Function(String method, String path, Map<String, dynamic>? body);
 
 class CofreClient {
@@ -1005,5 +1053,20 @@ class CofreClient {
     final path = '/api/v1/guest/assets/${Uri.encodeComponent(id.toString())}/preview';
     final json = await transport('POST', path, body.toJson());
     return PreviewView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<IdentityStatusView> identitystatus() async {
+    final path = '/api/v1/guest/identity';
+    final json = await transport('GET', path, null);
+    return IdentityStatusView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<IdentityRequestView> identityrequest(IdentityRequestDto body) async {
+    final path = '/api/v1/guest/identity/request';
+    final json = await transport('POST', path, body.toJson());
+    return IdentityRequestView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<IdentityStatusView> identityverify(IdentityVerifyDto body) async {
+    final path = '/api/v1/guest/identity/verify';
+    final json = await transport('POST', path, body.toJson());
+    return IdentityStatusView.fromJson(json as Map<String, dynamic>);
   }
 }

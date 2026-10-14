@@ -48,7 +48,7 @@ export class SharingService {
    await tx.guestSession.updateMany({ where: { shareId: id, revokedAt: null }, data: { revokedAt: new Date() } });
   });
  }
- private async access(token: unknown, tx: Prisma.TransactionClient = this.db) {
+ async access(token: unknown, tx: Prisma.TransactionClient = this.db) {
   if (!validToken(token)) throw unavailable();
   const session = await tx.guestSession.findUnique({ where: { tokenHash: digest(token) }, include: { share: { include: { project: true } } } });
   const now = Date.now();

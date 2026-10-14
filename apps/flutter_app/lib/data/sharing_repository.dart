@@ -34,6 +34,9 @@ class HttpSharingRepository implements SharingRepository {
 }
 
 abstract interface class GuestRepository {
+  Future<IdentityStatusView> identityStatus();
+  Future<IdentityRequestView> requestIdentity(String email);
+  Future<IdentityStatusView> verifyIdentity(String code);
   Future<void> bootstrap(String token);
   Future<GuestProjectView> project();
   Future<GuestVersionsView> versions({String? cursor});
@@ -56,6 +59,14 @@ final guestRepositoryProvider = Provider<GuestRepository>((ref) {
 class HttpGuestRepository implements GuestRepository {
   final CofreClient api;
   const HttpGuestRepository(this.api);
+  @override
+  Future<IdentityStatusView> identityStatus() => api.identitystatus();
+  @override
+  Future<IdentityRequestView> requestIdentity(String email) =>
+      api.identityrequest(IdentityRequestDto(email: email));
+  @override
+  Future<IdentityStatusView> verifyIdentity(String code) =>
+      api.identityverify(IdentityVerifyDto(code: code));
   @override
   Future<void> bootstrap(String token) async {
     await api.guestlogout(const EmptyDto());
