@@ -826,11 +826,233 @@ class IdentityVerifyDto {
   };
 }
 
+class CommentAnchorView {
+  final String kind;
+  final int? timeMs;
+  final int? page;
+  final num? x;
+  final num? y;
+  const CommentAnchorView({required this.kind, required this.timeMs, required this.page, required this.x, required this.y});
+  factory CommentAnchorView.fromJson(Map<String, dynamic> json) => CommentAnchorView(
+    kind: json['kind'] as String,
+    timeMs: json['timeMs'] == null ? null : json['timeMs'] as int,
+    page: json['page'] == null ? null : json['page'] as int,
+    x: json['x'] == null ? null : json['x'] as num,
+    y: json['y'] == null ? null : json['y'] as num,
+  );
+  Map<String, dynamic> toJson() => {
+    'kind': kind,
+    'timeMs': timeMs,
+    'page': page,
+    'x': x,
+    'y': y,
+  };
+}
+
+class CommentView {
+  final String id;
+  final String body;
+  final String authorLabel;
+  final String createdAt;
+  final CommentAnchorView anchor;
+  const CommentView({required this.id, required this.body, required this.authorLabel, required this.createdAt, required this.anchor});
+  factory CommentView.fromJson(Map<String, dynamic> json) => CommentView(
+    id: json['id'] as String,
+    body: json['body'] as String,
+    authorLabel: json['authorLabel'] as String,
+    createdAt: json['createdAt'] as String,
+    anchor: CommentAnchorView.fromJson(json['anchor'] as Map<String, dynamic>),
+  );
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'body': body,
+    'authorLabel': authorLabel,
+    'createdAt': createdAt,
+    'anchor': anchor.toJson(),
+  };
+}
+
+class CommentsView {
+  final List<CommentView> items;
+  final String? nextCursor;
+  final bool canComment;
+  final List<String> anchorTypes;
+  final int pages;
+  final int durationMs;
+  const CommentsView({required this.items, required this.nextCursor, required this.canComment, required this.anchorTypes, required this.pages, required this.durationMs});
+  factory CommentsView.fromJson(Map<String, dynamic> json) => CommentsView(
+    items: (json['items'] as List<dynamic>).map((e) => CommentView.fromJson(e as Map<String, dynamic>)).toList(),
+    nextCursor: json['nextCursor'] == null ? null : json['nextCursor'] as String,
+    canComment: json['canComment'] as bool,
+    anchorTypes: (json['anchorTypes'] as List<dynamic>).map((e) => e as String).toList(),
+    pages: json['pages'] as int,
+    durationMs: json['durationMs'] as int,
+  );
+  Map<String, dynamic> toJson() => {
+    'items': items.map((e) => e.toJson()).toList(),
+    'nextCursor': nextCursor,
+    'canComment': canComment,
+    'anchorTypes': anchorTypes.map((e) => e).toList(),
+    'pages': pages,
+    'durationMs': durationMs,
+  };
+}
+
+class CommentAnchorDto {
+  final String kind;
+  final int? timeMs;
+  static const timeMsMinimum = 0;
+  final int? page;
+  static const pageMinimum = 1;
+  static const pageMaximum = 100;
+  final num? x;
+  static const xMinimum = 0;
+  static const xMaximum = 1;
+  final num? y;
+  static const yMinimum = 0;
+  static const yMaximum = 1;
+  const CommentAnchorDto({required this.kind, this.timeMs, this.page, this.x, this.y});
+  factory CommentAnchorDto.fromJson(Map<String, dynamic> json) => CommentAnchorDto(
+    kind: json['kind'] as String,
+    timeMs: json['timeMs'] == null ? null : json['timeMs'] as int,
+    page: json['page'] == null ? null : json['page'] as int,
+    x: json['x'] == null ? null : json['x'] as num,
+    y: json['y'] == null ? null : json['y'] as num,
+  );
+  Map<String, dynamic> toJson() => {
+    'kind': kind,
+    'timeMs': timeMs,
+    'page': page,
+    'x': x,
+    'y': y,
+  };
+}
+
+class CreateCommentDto {
+  final String assetId;
+  final String clientRequestId;
+  final String body;
+  static const bodyMinLength = 1;
+  static const bodyMaxLength = 4000;
+  final CommentAnchorDto anchor;
+  const CreateCommentDto({required this.assetId, required this.clientRequestId, required this.body, required this.anchor});
+  factory CreateCommentDto.fromJson(Map<String, dynamic> json) => CreateCommentDto(
+    assetId: json['assetId'] as String,
+    clientRequestId: json['clientRequestId'] as String,
+    body: json['body'] as String,
+    anchor: CommentAnchorDto.fromJson(json['anchor'] as Map<String, dynamic>),
+  );
+  Map<String, dynamic> toJson() => {
+    'assetId': assetId,
+    'clientRequestId': clientRequestId,
+    'body': body,
+    'anchor': anchor.toJson(),
+  };
+}
+
+class RevisionRoundView {
+  final String id;
+  final String versionId;
+  final int versionNumber;
+  final String summary;
+  final String state;
+  final bool extra;
+  final int commentCount;
+  final String? decisionReason;
+  final String createdAt;
+  final String? decidedAt;
+  final String? resolvedAt;
+  const RevisionRoundView({required this.id, required this.versionId, required this.versionNumber, required this.summary, required this.state, required this.extra, required this.commentCount, required this.decisionReason, required this.createdAt, required this.decidedAt, required this.resolvedAt});
+  factory RevisionRoundView.fromJson(Map<String, dynamic> json) => RevisionRoundView(
+    id: json['id'] as String,
+    versionId: json['versionId'] as String,
+    versionNumber: json['versionNumber'] as int,
+    summary: json['summary'] as String,
+    state: json['state'] as String,
+    extra: json['extra'] as bool,
+    commentCount: json['commentCount'] as int,
+    decisionReason: json['decisionReason'] == null ? null : json['decisionReason'] as String,
+    createdAt: json['createdAt'] as String,
+    decidedAt: json['decidedAt'] == null ? null : json['decidedAt'] as String,
+    resolvedAt: json['resolvedAt'] == null ? null : json['resolvedAt'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'versionId': versionId,
+    'versionNumber': versionNumber,
+    'summary': summary,
+    'state': state,
+    'extra': extra,
+    'commentCount': commentCount,
+    'decisionReason': decisionReason,
+    'createdAt': createdAt,
+    'decidedAt': decidedAt,
+    'resolvedAt': resolvedAt,
+  };
+}
+
+class RevisionsView {
+  final List<RevisionRoundView> items;
+  final int included;
+  final int used;
+  final String? currentVersionId;
+  final bool canRequest;
+  const RevisionsView({required this.items, required this.included, required this.used, required this.currentVersionId, required this.canRequest});
+  factory RevisionsView.fromJson(Map<String, dynamic> json) => RevisionsView(
+    items: (json['items'] as List<dynamic>).map((e) => RevisionRoundView.fromJson(e as Map<String, dynamic>)).toList(),
+    included: json['included'] as int,
+    used: json['used'] as int,
+    currentVersionId: json['currentVersionId'] == null ? null : json['currentVersionId'] as String,
+    canRequest: json['canRequest'] as bool,
+  );
+  Map<String, dynamic> toJson() => {
+    'items': items.map((e) => e.toJson()).toList(),
+    'included': included,
+    'used': used,
+    'currentVersionId': currentVersionId,
+    'canRequest': canRequest,
+  };
+}
+
+class RequestRevisionDto {
+  final String versionId;
+  final String summary;
+  static const summaryMinLength = 1;
+  static const summaryMaxLength = 4000;
+  const RequestRevisionDto({required this.versionId, required this.summary});
+  factory RequestRevisionDto.fromJson(Map<String, dynamic> json) => RequestRevisionDto(
+    versionId: json['versionId'] as String,
+    summary: json['summary'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'versionId': versionId,
+    'summary': summary,
+  };
+}
+
+class DecideRevisionDto {
+  final String decision;
+  final String reason;
+  static const reasonMinLength = 1;
+  static const reasonMaxLength = 1000;
+  const DecideRevisionDto({required this.decision, required this.reason});
+  factory DecideRevisionDto.fromJson(Map<String, dynamic> json) => DecideRevisionDto(
+    decision: json['decision'] as String,
+    reason: json['reason'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'decision': decision,
+    'reason': reason,
+  };
+}
+
 typedef JsonTransport = Future<dynamic> Function(String method, String path, Map<String, dynamic>? body);
+typedef HeaderTransport = Future<dynamic> Function(String method, String path, Map<String, dynamic>? body, Map<String, String> headers);
 
 class CofreClient {
   final JsonTransport transport;
-  const CofreClient(this.transport);
+  final HeaderTransport? headerTransport;
+  const CofreClient(this.transport, {this.headerTransport});
   Future<CsrfView> authcsrf() async {
     final path = '/api/v1/auth/csrf';
     final json = await transport('GET', path, null);
@@ -1068,5 +1290,53 @@ class CofreClient {
     final path = '/api/v1/guest/identity/verify';
     final json = await transport('POST', path, body.toJson());
     return IdentityStatusView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<CommentsView> commentscreator(String id, {String? cursor, int? limit, String? search}) async {
+    final path = '/api/v1/assets/${Uri.encodeComponent(id.toString())}/comments';
+    final query = <String, String>{
+      if (cursor != null) 'cursor': cursor.toString(),
+      if (limit != null) 'limit': limit.toString(),
+      if (search != null) 'search': search.toString(),
+    };
+    final target = query.isEmpty ? path : Uri(path: path, queryParameters: query).toString();
+    final json = await transport('GET', target, null);
+    return CommentsView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<CommentsView> commentsguest(String id, {String? cursor, int? limit, String? search}) async {
+    final path = '/api/v1/guest/assets/${Uri.encodeComponent(id.toString())}/comments';
+    final query = <String, String>{
+      if (cursor != null) 'cursor': cursor.toString(),
+      if (limit != null) 'limit': limit.toString(),
+      if (search != null) 'search': search.toString(),
+    };
+    final target = query.isEmpty ? path : Uri(path: path, queryParameters: query).toString();
+    final json = await transport('GET', target, null);
+    return CommentsView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<CommentView> commentscreate(CreateCommentDto body) async {
+    final path = '/api/v1/guest/comments';
+    final json = await transport('POST', path, body.toJson());
+    return CommentView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<RevisionsView> revisionscreator(String id) async {
+    final path = '/api/v1/projects/${Uri.encodeComponent(id.toString())}/revisions';
+    final json = await transport('GET', path, null);
+    return RevisionsView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<RevisionsView> revisionsguest() async {
+    final path = '/api/v1/guest/revisions';
+    final json = await transport('GET', path, null);
+    return RevisionsView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<RevisionRoundView> revisionsrequest(RequestRevisionDto body, {required String idempotencyKey}) async {
+    final path = '/api/v1/guest/revision-requests';
+    if (headerTransport == null) throw StateError('Header transport required.');
+    final json = await headerTransport!('POST', path, body.toJson(), <String, String>{'idempotency-key': idempotencyKey.toString()});
+    return RevisionRoundView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<RevisionRoundView> revisionsdecide(DecideRevisionDto body, String id) async {
+    final path = '/api/v1/revisions/${Uri.encodeComponent(id.toString())}/decision';
+    final json = await transport('POST', path, body.toJson());
+    return RevisionRoundView.fromJson(json as Map<String, dynamic>);
   }
 }

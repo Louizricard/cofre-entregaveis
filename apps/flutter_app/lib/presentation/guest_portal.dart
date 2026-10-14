@@ -6,6 +6,8 @@ import '../data/auth_repository.dart';
 import '../data/sharing_repository.dart';
 import '../generated/api.g.dart';
 import 'preview.dart';
+import 'comments.dart';
+import 'revisions.dart';
 import 'guest_identity.dart';
 
 class GuestEntryScreen extends ConsumerStatefulWidget {
@@ -223,6 +225,19 @@ class _GuestPortalScreenState extends ConsumerState<GuestPortalScreen> {
                 ),
                 const SizedBox(height: 16),
                 const GuestIdentityPanel(),
+                OutlinedButton(
+                  onPressed: _busy || _version == null
+                      ? null
+                      : () => showDialog<void>(
+                          context: context,
+                          builder: (_) => RevisionsDialog(
+                            projectId: '',
+                            versionId: _version!.id,
+                            guest: true,
+                          ),
+                        ),
+                  child: const Text('Pedir ajustes / Ver rodadas'),
+                ),
                 const SizedBox(height: 20),
                 DropdownButtonFormField<String>(
                   key: ValueKey(_version?.id),
@@ -271,6 +286,20 @@ class _GuestPortalScreenState extends ConsumerState<GuestPortalScreen> {
                           ),
                           Text(
                             '${(int.parse(a.sizeBytes) / 1024).toStringAsFixed(1)} KiB',
+                          ),
+                          TextButton.icon(
+                            onPressed: _busy
+                                ? null
+                                : () => showDialog<void>(
+                                    context: context,
+                                    builder: (_) => CommentsDialog(
+                                      assetId: a.id,
+                                      fileName: a.fileName,
+                                      guest: true,
+                                    ),
+                                  ),
+                            icon: const Icon(Icons.comment),
+                            label: const Text('Comentários'),
                           ),
                           TextButton.icon(
                             onPressed: _busy

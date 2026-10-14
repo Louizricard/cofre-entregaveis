@@ -18,7 +18,10 @@ run(['db:generate']);
 run(['build']);
 // Workers intentionally consume the whole queue. Each suite needs its own schema,
 // otherwise a fake worker can consume another suite's uploads and corrupt its quotas.
-for (const suite of ['auth', 'projects', 'files', 'media', 'publication', 'sharing', 'identity']) {
+const suites = ['auth', 'projects', 'files', 'media', 'publication', 'sharing', 'identity', 'comments', 'revisions'];
+const selected = process.argv.slice(2);
+if (selected.some(suite => !suites.includes(suite))) throw new Error('Suíte de integração desconhecida.');
+for (const suite of selected.length ? selected : suites) {
  url.searchParams.set('schema', 'cofre_test_' + randomUUID().replaceAll('-', ''));
  const testEnv = { ...env, DATABASE_URL: url.href, TEST_DATABASE_URL: url.href };
  run(['db:migrate'], testEnv);

@@ -14,6 +14,10 @@ import { ProjectsService } from './projects.service.js';
 import { FilesController } from './files.controller.js';
 import { FilesService, MAINTENANCE } from './files.service.js';
 import { MediaService } from './media.service.js';
+import { CommentsController } from './comments.controller.js';
+import { CommentsService } from './comments.service.js';
+import { RevisionsController } from './revisions.controller.js';
+import { RevisionsService } from './revisions.service.js';
 import { IdentityController } from './identity.controller.js';
 import { IdentityService } from './identity.service.js';
 import { MAILER, ResendIdentityMailer, type IdentityMailer } from './identity-mail.js';
@@ -30,12 +34,12 @@ export async function createApp(config: Settings = settings(), options: { databa
  const db = options.database ?? createDatabase(config.databaseUrl);
  @Module({
   imports: [ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }])],
-  controllers: [AuthController, ProjectsController, ClientsController, HealthController, FilesController, SharingController, GuestController, IdentityController],
+  controllers: [AuthController, ProjectsController, ClientsController, HealthController, FilesController, SharingController, GuestController, IdentityController, CommentsController, RevisionsController],
   providers: [{ provide: SETTINGS, useValue: config }, { provide: DATABASE, useValue: db },
    { provide: STORAGE, useValue: options.storage !== undefined ? options.storage : config.storage ? new R2Storage(config.storage) : null },
    { provide: MAILER, useValue: options.mailer !== undefined ? options.mailer : config.email ? new ResendIdentityMailer(config.email.apiKey, config.email.from) : null },
    { provide: MAINTENANCE, useValue: !options.quiet },
-   AuthService, ProjectsService, FilesService, MediaService, SharingService, IdentityService, SessionGuard, MutationGuard],
+   AuthService, ProjectsService, FilesService, MediaService, SharingService, IdentityService, CommentsService, RevisionsService, SessionGuard, MutationGuard],
  })
  class AppModule {}
  const app = await NestFactory.create(AppModule, { logger: false });
@@ -51,7 +55,7 @@ export async function createApp(config: Settings = settings(), options: { databa
   next();
  });
  app.use(cookieParser());
- if (!config.production) app.enableCors({ origin: config.origin, credentials: true, methods: ['GET', 'POST', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'X-CSRF-Token'] });
+ if (!config.production) app.enableCors({ origin: config.origin, credentials: true, methods: ['GET', 'POST', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'X-CSRF-Token', 'Idempotency-Key'] });
  app.useGlobalFilters(new ErrorFilter());
  app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true, validationError: { target: false, value: false },
   exceptionFactory: errors => new BadRequestException({ code: 'VALIDATION_ERROR', message: 'Revise os campos informados.', details: { fields: errors.map(e => e.property) } }),

@@ -32,21 +32,33 @@ class HttpAuthRepository implements AuthRepository {
   final Uri base;
   String? _csrf;
   void Function()? onUnauthorized;
-  late final CofreClient _api = CofreClient(_request);
+  late final CofreClient _api = CofreClient(
+    _request,
+    headerTransport: requestWithHeaders,
+  );
   CofreClient get api => _api;
   HttpAuthRepository(this.httpClient, this.base);
+
+  Future<dynamic> requestWithHeaders(
+    String method,
+    String path,
+    Map<String, dynamic>? body,
+    Map<String, String> headers,
+  ) => _request(method, path, body, headers);
 
   Future<dynamic> _request(
     String method,
     String path,
-    Map<String, dynamic>? body,
-  ) async {
+    Map<String, dynamic>? body, [
+    Map<String, String> headers = const {},
+  ]) async {
     try {
       if (method != 'GET' && _csrf == null) {
         _csrf = (await _api.authcsrf()).csrfToken;
       }
       final request = http.Request(method, base.resolve(path));
       request.headers['Accept'] = 'application/json';
+      request.headers.addAll(headers);
       if (method != 'GET') {
         request.headers['Content-Type'] = 'application/json';
         request.headers['X-CSRF-Token'] = _csrf!;

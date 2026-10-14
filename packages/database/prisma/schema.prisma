@@ -21,6 +21,7 @@ model User {
  memberships WorkspaceMember[]
  sessions Session[]
  publishedVersions ProjectVersion[]
+ revisionDecisions RevisionRound[] @relation("RevisionDecision")
 }
 model Workspace {
  id String @id @default(uuid()) @db.Uuid
@@ -63,6 +64,7 @@ model Project {
  revision Int @default(0)
  shares ShareLink[]
  versions ProjectVersion[]
+ rounds RevisionRound[]
  createdAt DateTime @default(now()) @db.Timestamptz(3)
  updatedAt DateTime @updatedAt @db.Timestamptz(3)
  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -98,6 +100,7 @@ model ProjectVersion {
  createdAt DateTime @default(now()) @db.Timestamptz(3)
  project Project @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Restrict)
  assets Asset[]
+ rounds RevisionRound[]
  @@unique([projectId, number])
  @@unique([workspaceId, id])
 }
@@ -130,6 +133,7 @@ model Asset {
  updatedAt DateTime @updatedAt @db.Timestamptz(3)
  version ProjectVersion @relation(fields: [workspaceId, versionId], references: [workspaceId, id], onDelete: Restrict)
  mediaJob MediaJob?
+ comments Comment[]
  manualPreview ManualPreview? @relation("PreviewTarget")
  previewFor ManualPreview[] @relation("PreviewSource")
  @@unique([workspaceId, versionId, id])
@@ -249,6 +253,8 @@ model GuestSession {
  verifiedEmail String? @db.VarChar(254)
  challenge IdentityChallenge?
  identityRequests IdentityRequest[]
+ rounds RevisionRound[]
+ comments Comment[]
  share ShareLink @relation(fields: [shareId], references: [id], onDelete: Restrict)
  @@index([shareId, expiresAt])
 }
@@ -285,4 +291,60 @@ model IdentityRequest {
  session GuestSession @relation(fields: [sessionId], references: [id], onDelete: Restrict)
  @@index([sessionId, createdAt])
  @@index([createdAt])
+}
+
+model Comment {
+ id String @id @default(uuid()) @db.Uuid
+ workspaceId String @db.Uuid
+ versionId String @db.Uuid
+ assetId String @db.Uuid
+ guestSessionId String @db.Uuid
+ clientRequestId String @db.Uuid
+ payloadHash String @db.Char(64)
+ authorEmail String @db.VarChar(254)
+ body String @db.VarChar(4000)
+ anchorKind String @db.VarChar(20)
+ timeMs Int?
+ page Int?
+ x Float?
+ y Float?
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ asset Asset @relation(fields: [workspaceId, versionId, assetId], references: [workspaceId, versionId, id], onDelete: Restrict)
+ guest GuestSession @relation(fields: [guestSessionId], references: [id], onDelete: Restrict)
+ @@unique([guestSessionId, clientRequestId])
+ @@index([workspaceId, assetId, createdAt, id])
+ @@index([workspaceId, versionId])
+}
+
+enum RevisionState {
+ PENDING
+ OPEN
+ RESOLVED
+ REJECTED
+ CANCELLED
+}
+model RevisionRound {
+ id String @id @default(uuid()) @db.Uuid
+ workspaceId String @db.Uuid
+ projectId String @db.Uuid
+ versionId String @db.Uuid
+ guestSessionId String @db.Uuid
+ requestKey String @db.Uuid
+ payloadHash String @db.Char(64)
+ authorEmail String @db.VarChar(254)
+ summary String @db.VarChar(4000)
+ commentIds Json
+ state RevisionState
+ extra Boolean
+ decidedById String? @db.Uuid
+ decidedAt DateTime? @db.Timestamptz(3)
+ decisionReason String? @db.VarChar(1000)
+ resolvedAt DateTime? @db.Timestamptz(3)
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ project Project @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Restrict)
+ version ProjectVersion @relation(fields: [workspaceId, versionId], references: [workspaceId, id], onDelete: Restrict)
+ guest GuestSession @relation(fields: [guestSessionId], references: [id], onDelete: Restrict)
+ decidedBy User? @relation("RevisionDecision", fields: [decidedById], references: [id], onDelete: Restrict)
+ @@unique([guestSessionId, requestKey])
+ @@index([workspaceId, projectId, createdAt])
 }

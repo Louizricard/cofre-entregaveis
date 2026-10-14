@@ -95,6 +95,8 @@ export class FilesService implements OnModuleInit, OnModuleDestroy {
    if (files.some(a => previewSupported(a.mime) && a.mediaJob?.state !== 'READY')) throw conflict('PREVIEW_NOT_READY', 'Aguarde as prévias ou reprocesse as falhas antes de publicar.');
    await tx.project.update({ where: { id: version.projectId }, data: { revision: { increment: 1 } } });
    await tx.projectVersion.updateMany({ where: { projectId: version.projectId, state: 'PUBLISHED' }, data: { state: 'SUPERSEDED' } });
+     await tx.revisionRound.updateMany({ where: { projectId: version.projectId, state: 'OPEN' }, data: { state: 'RESOLVED', resolvedAt: new Date() } });
+     await tx.revisionRound.updateMany({ where: { projectId: version.projectId, state: 'PENDING' }, data: { state: 'CANCELLED', resolvedAt: new Date() } });
    const result = await tx.projectVersion.update({ where: { id }, data: { state: 'PUBLISHED', publishedAt: new Date(), publishedById: userId } });
    return { id, number: result.number, state: result.state, projectRevision: expectedProjectRevision + 1, createdAt: result.createdAt, assets: version.assets.map(view) };
   });
