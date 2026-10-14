@@ -10,6 +10,8 @@ import '../generated/api.g.dart';
 import 'preview.dart';
 import 'manual_preview.dart';
 import 'sharing.dart';
+import 'comments.dart';
+import 'revisions.dart';
 
 final uploadFilePickerProvider = Provider<Future<UploadFile?> Function()>(
   (ref) => pickUploadFile,
@@ -515,6 +517,19 @@ class _FilesPanelState extends ConsumerState<FilesPanel> {
           spacing: 8,
           runSpacing: 8,
           children: [
+            OutlinedButton(
+              onPressed: _busy || _loading
+                  ? null
+                  : () => showDialog<void>(
+                      context: context,
+                      builder: (_) => RevisionsDialog(
+                        projectId: widget.projectId,
+                        guest: false,
+                        active: widget.active,
+                      ),
+                    ),
+              child: const Text('Rodadas de ajustes'),
+            ),
             if (editable && version != null)
               OutlinedButton.icon(
                 onPressed:
@@ -632,6 +647,21 @@ class _FilesPanelState extends ConsumerState<FilesPanel> {
                   Wrap(
                     spacing: 8,
                     children: [
+                      if (a.status == 'READY')
+                        TextButton.icon(
+                          onPressed: _busy
+                              ? null
+                              : () => showDialog<void>(
+                                  context: context,
+                                  builder: (_) => CommentsDialog(
+                                    assetId: a.id,
+                                    fileName: a.fileName,
+                                    guest: false,
+                                  ),
+                                ),
+                          icon: const Icon(Icons.comment),
+                          label: const Text('Comentários'),
+                        ),
                       if (a.status == 'READY' &&
                           a.scanStatus == 'CLEAN' &&
                           widget.active)

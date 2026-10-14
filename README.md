@@ -240,7 +240,11 @@ Versões prontas podem ser publicadas por **Publicar versão**, com confirmaçã
 
 **Compartilhar prévias** cria link secreto com validade e revogação. O portal convidado mostra versões publicadas e derivados privados, sem rascunhos ou download de originais. O link só é exibido ao criar; guarde-o. No ambiente local, teste em uma guia anônima do mesmo PC. Use `--no-web-resources-cdn` para servir recursos Flutter localmente. Guia: [docs/portal-previas.md](docs/portal-previas.md).
 
-Confirmação do e-mail do cliente tem código de uso único, validade de dez minutos, cinco tentativas e fila de envio cifrada. Configure `RESEND_API_KEY`, `EMAIL_FROM` e `IDENTITY_SECRET` juntos conforme [docs/identidade-cliente.md](docs/identidade-cliente.md). Sem provedor, permanece desabilitada; testes usam envio em memória, sem confirmar recebimento real. Comentários, aprovação e pagamentos continuam em etapas posteriores.
+Confirmação do e-mail do cliente tem código de uso único, validade de dez minutos, cinco tentativas e fila de envio cifrada. Configure `RESEND_API_KEY`, `EMAIL_FROM` e `IDENTITY_SECRET` juntos conforme [docs/identidade-cliente.md](docs/identidade-cliente.md). Sem provedor, permanece desabilitada; o responsável confirmou recebimento real no próprio endereço de teste.
+
+**Comentários** permite ao cliente identificado comentar a versão publicada atual, com referência geral, página/ponto ou instante da prévia. O criador consulta os comentários no cartão do arquivo; versões anteriores são somente leitura. Regras em [docs/comentarios-arquivos.md](docs/comentarios-arquivos.md).
+
+**Pedir ajustes / Ver rodadas** reúne os comentários e fecha a coleta até a nova publicação. Pedidos extras aguardam aceite ou recusa justificada do criador em **Rodadas de ajustes**. Contagem e histórico ficam disponíveis nos dois painéis. Guia: [docs/rodadas-ajustes.md](docs/rodadas-ajustes.md). Aprovação e pagamentos são as etapas seguintes.
 
 PNG/JPEG/WebP e PDF têm derivados JPEG separados, com marca d’água nos pixels. MP4 recebe trecho de até 60 s em 720p com marca; MP3/WAV recebem trecho AAC de até 60 s. A interface oferece **Ver prévia**, páginas, reprodutor Web e retry; não usa original como fallback. Worker Node separado com fila persistente no PostgreSQL, reserva de cota e limpeza após falhas. Configure `MEDIA_PYTHON`, `MEDIA_FFMPEG` e `MEDIA_FFPROBE` e execute `pnpm media:worker`; detalhes e limites em [docs/previas-desenvolvimento.md](docs/previas-desenvolvimento.md).
 

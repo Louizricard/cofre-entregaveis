@@ -50,7 +50,7 @@ for (const [name, schema] of Object.entries(schemas)) {
  for (const [key, prop] of props) out += "    '" + key + "': " + encode(prop, key) + ',\n';
  out += '  };\n}\n\n';
 }
-out += 'typedef JsonTransport = Future<dynamic> Function(String method, String path, Map<String, dynamic>? body);\n\nclass CofreClient {\n  final JsonTransport transport;\n  const CofreClient(this.transport);\n';
+out += 'typedef JsonTransport = Future<dynamic> Function(String method, String path, Map<String, dynamic>? body);\ntypedef HeaderTransport = Future<dynamic> Function(String method, String path, Map<String, dynamic>? body, Map<String, String> headers);\n\nclass CofreClient {\n  final JsonTransport transport;\n  final HeaderTransport? headerTransport;\n  const CofreClient(this.transport, {this.headerTransport});\n';
 for (const [path, verbs] of Object.entries(spec.paths)) for (const [verb, op] of Object.entries(verbs)) {
  const method = op.operationId.replace(/Controller_/, '').replace(/^[A-Z]/, c => c.toLowerCase());
  const input = op.requestBody?.content?.['application/json']?.schema;
@@ -58,9 +58,13 @@ for (const [path, verbs] of Object.entries(spec.paths)) for (const [verb, op] of
  const params = op.parameters ?? [];
  const pathParams = params.filter(p => p.in === 'path');
  const queryParams = params.filter(p => p.in === 'query');
+ // Origin and CSRF are maintained by the authenticated transport, not callers.
+ const headerParams = params.filter(p => p.in === 'header' && p.name.toLowerCase() === 'idempotency-key')
+  .filter((p, i, all) => all.findIndex(other => other.name.toLowerCase() === p.name.toLowerCase()) === i);
+ const argName = p => p.name.replace(/-([a-z])/gi, (_, c) => c.toUpperCase()).replace(/^[A-Z]/, c => c.toLowerCase());
  if (params.some(p => !['path', 'query', 'header', 'cookie'].includes(p.in))) throw new Error('Unsupported parameters: ' + method);
  const args = [...(input ? [type(input) + ' body'] : []), ...pathParams.map(p => type(p.schema) + ' ' + p.name)];
- if (queryParams.length) args.push('{' + queryParams.map(p => (p.required ? 'required ' : '') + type(p.schema) + (p.required ? '' : '?') + ' ' + p.name).join(', ') + '}');
+ if (queryParams.length || headerParams.length) args.push('{' + [...queryParams, ...headerParams].map(p => (p.required ? 'required ' : '') + type(p.schema) + (p.required ? '' : '?') + ' ' + argName(p)).join(', ') + '}');
  out += '  Future<' + (response ? type(response) : 'void') + '> ' + method + '(' + args.join(', ') + ') async {\n';
  const dartPath = path.replace(/\{([^}]+)\}/g, (_, name) => '${Uri.encodeComponent(' + name + '.toString())}');
  out += "    final path = '" + dartPath + "';\n";
@@ -69,7 +73,8 @@ for (const [path, verbs] of Object.entries(spec.paths)) for (const [verb, op] of
   for (const p of queryParams) out += '      ' + (p.required ? '' : 'if (' + p.name + ' != null) ') + "'" + p.name + "': " + p.name + '.toString(),\n';
   out += '    };\n    final target = query.isEmpty ? path : Uri(path: path, queryParameters: query).toString();\n';
  }
- out += '    ' + (response ? 'final json = ' : '') + "await transport('" + verb.toUpperCase() + "', " + (queryParams.length ? 'target' : 'path') + ', ' + (input ? 'body.toJson()' : 'null') + ');\n';
+ if (headerParams.length) out += "    if (headerTransport == null) throw StateError('Header transport required.');\n";
+ out += '    ' + (response ? 'final json = ' : '') + 'await ' + (headerParams.length ? 'headerTransport!' : 'transport') + "('" + verb.toUpperCase() + "', " + (queryParams.length ? 'target' : 'path') + ', ' + (input ? 'body.toJson()' : 'null') + (headerParams.length ? ', <String, String>{' + headerParams.map(p => (p.required ? '' : 'if (' + argName(p) + ' != null) ') + "'" + p.name + "': " + argName(p) + '.toString()').join(', ') + '}' : '') + ');\n';
  if (response) out += '    return ' + decode(response, 'json') + ';\n';
  out += '  }\n';
 }

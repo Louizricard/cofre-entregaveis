@@ -3849,6 +3849,287 @@
           "guest-identity"
         ]
       }
+    },
+    "/api/v1/assets/{id}/comments": {
+      "get": {
+        "operationId": "CommentsController_creator",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentsView"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "comments"
+        ]
+      }
+    },
+    "/api/v1/guest/assets/{id}/comments": {
+      "get": {
+        "operationId": "CommentsController_guest",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentsView"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "comments"
+        ]
+      }
+    },
+    "/api/v1/guest/comments": {
+      "post": {
+        "operationId": "CommentsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCommentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentView"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "comments"
+        ]
+      }
+    },
+    "/api/v1/projects/{id}/revisions": {
+      "get": {
+        "operationId": "RevisionsController_creator",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionsView"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "revisions"
+        ]
+      }
+    },
+    "/api/v1/guest/revisions": {
+      "get": {
+        "operationId": "RevisionsController_guest",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionsView"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "revisions"
+        ]
+      }
+    },
+    "/api/v1/guest/revision-requests": {
+      "post": {
+        "operationId": "RevisionsController_request",
+        "parameters": [
+          {
+            "name": "idempotency-key",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestRevisionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionRoundView"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "revisions"
+        ]
+      }
+    },
+    "/api/v1/revisions/{id}/decision": {
+      "post": {
+        "operationId": "RevisionsController_decide",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideRevisionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionRoundView"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "revisions"
+        ]
+      }
     }
   },
   "info": {
@@ -4925,6 +5206,295 @@
         },
         "required": [
           "code"
+        ]
+      },
+      "CommentAnchorView": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "timeMs": {
+            "type": "integer",
+            "nullable": true
+          },
+          "page": {
+            "type": "integer",
+            "nullable": true
+          },
+          "x": {
+            "type": "number",
+            "nullable": true
+          },
+          "y": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "required": [
+          "kind",
+          "timeMs",
+          "page",
+          "x",
+          "y"
+        ]
+      },
+      "CommentView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "body": {
+            "type": "string"
+          },
+          "authorLabel": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "anchor": {
+            "$ref": "#/components/schemas/CommentAnchorView"
+          }
+        },
+        "required": [
+          "id",
+          "body",
+          "authorLabel",
+          "createdAt",
+          "anchor"
+        ]
+      },
+      "CommentsView": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommentView"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          },
+          "canComment": {
+            "type": "boolean"
+          },
+          "anchorTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pages": {
+            "type": "integer"
+          },
+          "durationMs": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "canComment",
+          "anchorTypes",
+          "pages",
+          "durationMs"
+        ]
+      },
+      "CommentAnchorDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "GENERAL",
+              "TIME",
+              "IMAGE_POINT",
+              "PDF_POINT"
+            ]
+          },
+          "timeMs": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "x": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "y": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "CreateCommentDto": {
+        "type": "object",
+        "properties": {
+          "assetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clientRequestId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identificador estável para repetir uma tentativa de envio."
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          },
+          "anchor": {
+            "$ref": "#/components/schemas/CommentAnchorDto"
+          }
+        },
+        "required": [
+          "assetId",
+          "clientRequestId",
+          "body",
+          "anchor"
+        ]
+      },
+      "RevisionRoundView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "versionId": {
+            "type": "string"
+          },
+          "versionNumber": {
+            "type": "integer"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "extra": {
+            "type": "boolean"
+          },
+          "commentCount": {
+            "type": "integer"
+          },
+          "decisionReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "resolvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "versionId",
+          "versionNumber",
+          "summary",
+          "state",
+          "extra",
+          "commentCount",
+          "decisionReason",
+          "createdAt",
+          "decidedAt",
+          "resolvedAt"
+        ]
+      },
+      "RevisionsView": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RevisionRoundView"
+            }
+          },
+          "included": {
+            "type": "integer"
+          },
+          "used": {
+            "type": "integer"
+          },
+          "currentVersionId": {
+            "type": "string",
+            "nullable": true
+          },
+          "canRequest": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "included",
+          "used",
+          "currentVersionId",
+          "canRequest"
+        ]
+      },
+      "RequestRevisionDto": {
+        "type": "object",
+        "properties": {
+          "versionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          }
+        },
+        "required": [
+          "versionId",
+          "summary"
+        ]
+      },
+      "DecideRevisionDto": {
+        "type": "object",
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "ACCEPT",
+              "REJECT"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "decision",
+          "reason"
         ]
       }
     }

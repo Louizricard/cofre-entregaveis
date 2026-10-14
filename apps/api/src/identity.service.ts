@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, ServiceUnavailableException, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Inject, Injectable, ServiceUnavailableException, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
 import { randomInt, randomUUID, timingSafeEqual } from 'node:crypto';
 import type { Database, Prisma } from '@cofre/database';
 import { DATABASE, SETTINGS, type Settings } from './config.js';
@@ -26,6 +26,11 @@ export class IdentityService implements OnModuleInit, OnModuleDestroy {
   const session = await this.sharing.access(req.cookies?.[guestCookie(this.config)], tx);
   const client = await tx.client.findFirstOrThrow({ where: { id: session.share.project.clientId, workspaceId: session.share.workspaceId } });
   return { session, email: client.email };
+ }
+ async confirmed(req: GuestRequest, tx: Prisma.TransactionClient = this.db) {
+  const access = await this.access(req, tx);
+  if (!access.session.verifiedAt || access.session.verifiedEmail !== access.email) throw new ForbiddenException({ code: 'IDENTITY_REQUIRED', message: 'Confirme seu e-mail no portal para acessar os comentários.' });
+  return access;
  }
  async status(req: GuestRequest) {
   const { session, email } = await this.access(req);

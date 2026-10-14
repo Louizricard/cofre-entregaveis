@@ -113,7 +113,7 @@ Em 12/10/2026, o responsável ativou o R2. O agente criou o bucket Standard priv
 
 ## Próximo trabalho de produto
 
-Publicação, portal de prévias e revogação foram confirmados manualmente pelo responsável. Confirmação de e-mail validada com testes automatizados e recebimento real no próprio endereço da conta Resend. Próxima etapa: comentários, rodadas e aprovação; envio a clientes externos depende de domínio verificado. Pagamentos seguem em marco posterior.
+Publicação, portal e identidade foram confirmados manualmente pelo responsável. Comentários identificados estão implementados localmente e aguardam conferência manual. Próxima parte: pedidos de ajustes por rodada e revisões incluídas, depois aprovação. Envio de e-mail a clientes externos depende de domínio verificado; pagamentos seguem em marco posterior.
 
 ## Marco de prévias, parte 1 — imagens e PDF (13/10/2026)
 
@@ -210,3 +210,29 @@ Guia: [portal-previas.md](portal-previas.md). O responsável confirmou que o por
 Checks: lint, typecheck, Prisma generate/validate, build API e contratos passaram; 11 unitários API e 75 testes de integração reportados (68 cenários + 7 pais), com PostgreSQL isolado por suíte. Remetente simulado somente em memória; casos incluem cinco erros persistidos, uso único/sessão, expiração/reenvio, retries/lease, cota concorrente, e-mail alterado/revogação/arquivamento e modo desabilitado. Flutter: 50 testes, analyze e build Web release sem CDN passaram, incluindo formulário em 360/768/1440 px. Parsers/R2 não foram alterados. Os testes automatizados não contatam o provedor; a entrega real foi confirmada posteriormente pelo responsável.
 
 O responsável criou a conta Resend, salvou a chave somente no .env local e configurou remetente de teste. Em 14/10/2026, criou cliente/projeto sintéticos, publicou uma versão e confirmou recebimento e uso do código no portal: “E-mail confirmado neste acesso”. O teste real foi no próprio endereço da conta, sem domínio próprio. Guia: [identidade-cliente.md](identidade-cliente.md). O gate de recebimento real desta etapa foi confirmado pelo responsável. Envio para clientes externos ainda exige domínio próprio verificado.
+
+
+## Marco do portal, parte 4 — comentários identificados (14/10/2026)
+
+- Comment vinculado ao workspace/versão/arquivo e à sessão convidada, com e-mail confirmado e horário para auditoria. Corpo até quatro mil caracteres, exibido como texto literal. Consultas paginadas retornam somente autor genérico, texto, horário e referência; não expõem e-mail, sessão, chaves ou payloadHash.
+- Cliente precisa de identidade confirmada ainda correspondente ao cadastro para consultar/escrever. Novos comentários somente na versão PUBLISHED atual, com segurança vigente no original e fonte manual. Histórico SUPERSEDED fica para consulta. Criador consulta comentários no próprio workspace, inclusive em projeto arquivado; não há resposta/edição/exclusão nesta parte.
+- Âncoras GENERAL, IMAGE_POINT, PDF_POINT e TIME validadas no backend: formato, campos aplicáveis, coordenadas normalizadas, página existente e duração do trecho derivado. ZIP resolve somente a fonte manual imutável. Interface oferece formulário com posições em percentual e segundos, sem seleção por clique/captura automática do player nesta parte.
+- Tentativa clientRequestId por sessão/payload impede duplicação em retry/resposta perdida; payload diferente retorna conflito. Transação Serializable e revisão do projeto serializam comentários com publicação/arquivamento. Até duzentos comentários/arquivo e mil/versão; envio limitado a trinta tentativas/minuto/IP. Comentários não consomem rodadas de ajustes nem liberam originais.
+- Flutter: Comentários no portal e no painel do criador, consulta/histórico, formulário e erros de identidade/estado, campos por referência, retry preservando tentativa e texto. Atualizar referências não mantém uma seleção indisponível nem perde o texto digitado.
+- Migration incremental asset_comments aplicada em schemas isolados e no banco local, preservando uploads/versões/identidades. Branch codex/comentarios-arquivos baseada na main após PR #6; sem commit/push desta etapa.
+
+Checks: lint, typecheck, Prisma generate/validate, build API e contratos passaram; 11 unitários API e 86 testes de integração reportados (78 cenários + 8 pais), com schemas isolados. Casos novos incluem identidade/CSRF, metadados seguros, âncoras, projeto publicado distinto no mesmo workspace, rascunhos, paginação, expiração da segurança, limite concorrente e publicação concorrente/histórico. Flutter: 60 cenários distintos passaram (suíte de 59 + caso adicional e reexecução dos dez casos de comentários), analyze e build Web release sem CDN passaram. Parsers, R2 e envio de e-mail não foram alterados nem reprocessados para provar esta etapa.
+
+O responsável confirmou os comentários funcionando em 14/10/2026: “deu certo, pode seguir”. Guia: [comentarios-arquivos.md](comentarios-arquivos.md). Rodadas de revisão foram autorizadas em seguida; aprovação/pagamentos seguem depois.
+
+## Marco do portal, parte 5 — pedidos e rodadas de ajustes (14/10/2026)
+
+- Cliente identificado envia resumo na versão publicada atual. O pedido registra snapshot dos IDs dos comentários existentes e fecha a coleta. Comentários individuais não consomem revisões. Uma única rodada OPEN/PENDING por projeto, garantida também por índice parcial.
+- Contagem de revisões aceitas/encerradas compara com includedRevisionRounds. Pedido incluído entra OPEN; extra entra PENDING até o criador aceitar ou recusar com justificativa. Aceite conta uma rodada e audita autor/horário/motivo; recusa não conta e permite recolher comentários e reenviar um pedido sujeito a decisão.
+- Publicação resolve OPEN e cancela PENDING na mesma transação, preservando histórico e abrindo coleta na nova versão. RESOLVED significa nova entrega publicada, sem representar aprovação do cliente. Projeto arquivado bloqueia ações; criador conserva consulta.
+- Idempotency-Key UUID por sessão/payload recupera tentativas, inclusive após publicação. Chave reutilizada com payload diferente e pedidos simultâneos incompatíveis conflitam. Decisão igual pelo mesmo usuário também é idempotente. Serializable e revisão do projeto ordenam comentário, pedido, decisão e publicação.
+- Flutter oferece formulário/resumo, avisos de limite e histórico no portal e decisões no painel do criador; texto literal e retry com chave estável. Contrato e cliente Dart suportam o cabeçalho sem alterar responsabilidade do transporte sobre CSRF. Até cem pedidos/projeto e dez tentativas/minuto/IP.
+
+Checks: lint, typecheck, Prisma generate/validate, build API e contratos passaram; 11 testes unitários API. As oito suítes anteriores passaram com a nova migration (86 testes reportados); após correções nos fixtures do teste novo, a suíte de rodadas passou com 9 testes reportados (8 cenários + pai), totalizando 95 testes reportados em schemas isolados. Incluem snapshot/fechamento concorrente com comentário, publicação concorrente, identidade/CSRF/chave, isolamento/rascunho, contagem/decisão e histórico. Flutter: 68 testes, analyze e build Web release sem CDN passaram, incluindo larguras 360/768/1440, retry após resposta perdida, histórico, identidade e decisão justificada. Parsers, R2 e envio de e-mail não foram alterados ou revalidados em serviços reais nesta etapa.
+
+Guia: [rodadas-ajustes.md](rodadas-ajustes.md). O responsável confirmou as rodadas funcionando em 14/10/2026 e autorizou o envio ao GitHub. Entrega na branch codex/comentarios-arquivos, junto aos comentários já confirmados pelo responsável. Próxima implementação: aprovação explícita da versão pelo cliente identificado, antes de pagamentos e liberação de originais.
