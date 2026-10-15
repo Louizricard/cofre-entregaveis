@@ -1046,6 +1046,167 @@ class DecideRevisionDto {
   };
 }
 
+class ApprovalView {
+  final String id;
+  final String versionId;
+  final String authorLabel;
+  final String approvedAt;
+  const ApprovalView({required this.id, required this.versionId, required this.authorLabel, required this.approvedAt});
+  factory ApprovalView.fromJson(Map<String, dynamic> json) => ApprovalView(
+    id: json['id'] as String,
+    versionId: json['versionId'] as String,
+    authorLabel: json['authorLabel'] as String,
+    approvedAt: json['approvedAt'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'versionId': versionId,
+    'authorLabel': authorLabel,
+    'approvedAt': approvedAt,
+  };
+}
+
+class ApprovalStatusView {
+  final String versionId;
+  final int versionNumber;
+  final String versionState;
+  final ApprovalView? approval;
+  final bool canApprove;
+  final String? reason;
+  const ApprovalStatusView({required this.versionId, required this.versionNumber, required this.versionState, required this.approval, required this.canApprove, required this.reason});
+  factory ApprovalStatusView.fromJson(Map<String, dynamic> json) => ApprovalStatusView(
+    versionId: json['versionId'] as String,
+    versionNumber: json['versionNumber'] as int,
+    versionState: json['versionState'] as String,
+    approval: json['approval'] == null ? null : ApprovalView.fromJson(json['approval'] as Map<String, dynamic>),
+    canApprove: json['canApprove'] as bool,
+    reason: json['reason'] == null ? null : json['reason'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'versionId': versionId,
+    'versionNumber': versionNumber,
+    'versionState': versionState,
+    'approval': approval?.toJson(),
+    'canApprove': canApprove,
+    'reason': reason,
+  };
+}
+
+class CreateApprovalDto {
+  final String versionId;
+  final bool confirmed;
+  const CreateApprovalDto({required this.versionId, required this.confirmed});
+  factory CreateApprovalDto.fromJson(Map<String, dynamic> json) => CreateApprovalDto(
+    versionId: json['versionId'] as String,
+    confirmed: json['confirmed'] as bool,
+  );
+  Map<String, dynamic> toJson() => {
+    'versionId': versionId,
+    'confirmed': confirmed,
+  };
+}
+
+class InvoiceView {
+  final String id;
+  final int number;
+  final int amountCents;
+  final String currency;
+  final String state;
+  final int revision;
+  const InvoiceView({required this.id, required this.number, required this.amountCents, required this.currency, required this.state, required this.revision});
+  factory InvoiceView.fromJson(Map<String, dynamic> json) => InvoiceView(
+    id: json['id'] as String,
+    number: json['number'] as int,
+    amountCents: json['amountCents'] as int,
+    currency: json['currency'] as String,
+    state: json['state'] as String,
+    revision: json['revision'] as int,
+  );
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'number': number,
+    'amountCents': amountCents,
+    'currency': currency,
+    'state': state,
+    'revision': revision,
+  };
+}
+
+class SettlementView {
+  final String id;
+  final String kind;
+  final String reason;
+  final String actorName;
+  final int amountCents;
+  final int invoiceRevision;
+  final String createdAt;
+  const SettlementView({required this.id, required this.kind, required this.reason, required this.actorName, required this.amountCents, required this.invoiceRevision, required this.createdAt});
+  factory SettlementView.fromJson(Map<String, dynamic> json) => SettlementView(
+    id: json['id'] as String,
+    kind: json['kind'] as String,
+    reason: json['reason'] as String,
+    actorName: json['actorName'] as String,
+    amountCents: json['amountCents'] as int,
+    invoiceRevision: json['invoiceRevision'] as int,
+    createdAt: json['createdAt'] as String,
+  );
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'kind': kind,
+    'reason': reason,
+    'actorName': actorName,
+    'amountCents': amountCents,
+    'invoiceRevision': invoiceRevision,
+    'createdAt': createdAt,
+  };
+}
+
+class FinanceView {
+  final InvoiceView invoice;
+  final List<SettlementView> history;
+  final bool canSettle;
+  final bool canReverse;
+  const FinanceView({required this.invoice, required this.history, required this.canSettle, required this.canReverse});
+  factory FinanceView.fromJson(Map<String, dynamic> json) => FinanceView(
+    invoice: InvoiceView.fromJson(json['invoice'] as Map<String, dynamic>),
+    history: (json['history'] as List<dynamic>).map((e) => SettlementView.fromJson(e as Map<String, dynamic>)).toList(),
+    canSettle: json['canSettle'] as bool,
+    canReverse: json['canReverse'] as bool,
+  );
+  Map<String, dynamic> toJson() => {
+    'invoice': invoice.toJson(),
+    'history': history.map((e) => e.toJson()).toList(),
+    'canSettle': canSettle,
+    'canReverse': canReverse,
+  };
+}
+
+class ManualSettlementDto {
+  final String invoiceId;
+  final int expectedRevision;
+  static const expectedRevisionMinimum = 0;
+  final String kind;
+  final String reason;
+  static const reasonMinLength = 5;
+  static const reasonMaxLength = 1000;
+  final bool confirmed;
+  const ManualSettlementDto({required this.invoiceId, required this.expectedRevision, required this.kind, required this.reason, required this.confirmed});
+  factory ManualSettlementDto.fromJson(Map<String, dynamic> json) => ManualSettlementDto(
+    invoiceId: json['invoiceId'] as String,
+    expectedRevision: json['expectedRevision'] as int,
+    kind: json['kind'] as String,
+    reason: json['reason'] as String,
+    confirmed: json['confirmed'] as bool,
+  );
+  Map<String, dynamic> toJson() => {
+    'invoiceId': invoiceId,
+    'expectedRevision': expectedRevision,
+    'kind': kind,
+    'reason': reason,
+    'confirmed': confirmed,
+  };
+}
+
 typedef JsonTransport = Future<dynamic> Function(String method, String path, Map<String, dynamic>? body);
 typedef HeaderTransport = Future<dynamic> Function(String method, String path, Map<String, dynamic>? body, Map<String, String> headers);
 
@@ -1338,5 +1499,37 @@ class CofreClient {
     final path = '/api/v1/revisions/${Uri.encodeComponent(id.toString())}/decision';
     final json = await transport('POST', path, body.toJson());
     return RevisionRoundView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<ApprovalStatusView> approvalscreator(String id) async {
+    final path = '/api/v1/versions/${Uri.encodeComponent(id.toString())}/approval';
+    final json = await transport('GET', path, null);
+    return ApprovalStatusView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<ApprovalStatusView> approvalsguest(String id) async {
+    final path = '/api/v1/guest/versions/${Uri.encodeComponent(id.toString())}/approval';
+    final json = await transport('GET', path, null);
+    return ApprovalStatusView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<ApprovalView> approvalscreate(CreateApprovalDto body, {required String idempotencyKey}) async {
+    final path = '/api/v1/guest/approvals';
+    if (headerTransport == null) throw StateError('Header transport required.');
+    final json = await headerTransport!('POST', path, body.toJson(), <String, String>{'idempotency-key': idempotencyKey.toString()});
+    return ApprovalView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<FinanceView> financeget(String id) async {
+    final path = '/api/v1/projects/${Uri.encodeComponent(id.toString())}/finance';
+    final json = await transport('GET', path, null);
+    return FinanceView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<FinanceView> financesettle(ManualSettlementDto body, String id, {required String idempotencyKey}) async {
+    final path = '/api/v1/projects/${Uri.encodeComponent(id.toString())}/manual-settlement';
+    if (headerTransport == null) throw StateError('Header transport required.');
+    final json = await headerTransport!('POST', path, body.toJson(), <String, String>{'idempotency-key': idempotencyKey.toString()});
+    return FinanceView.fromJson(json as Map<String, dynamic>);
+  }
+  Future<DownloadView> financedownload(EmptyDto body, String id) async {
+    final path = '/api/v1/guest/assets/${Uri.encodeComponent(id.toString())}/download';
+    final json = await transport('POST', path, body.toJson());
+    return DownloadView.fromJson(json as Map<String, dynamic>);
   }
 }

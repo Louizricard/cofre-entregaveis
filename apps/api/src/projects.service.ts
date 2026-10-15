@@ -36,7 +36,7 @@ export class ProjectsService {
  }
  async createProject(workspaceId: string, dto: CreateProjectDto) {
   if (!await this.db.client.findFirst({ where: { id: dto.clientId, workspaceId }, select: { id: true } })) throw missing();
-  return this.db.project.create({ data: { ...dto, workspaceId }, select: projectSelect });
+  return this.db.project.create({ data: { ...dto, workspaceId, invoices: { create: { amountCents: dto.balanceCents } } }, select: projectSelect });
  }
  async projects(workspaceId: string, query: ProjectsQuery) {
   if (query.cursor && !await this.db.project.findFirst({ where: { id: query.cursor, workspaceId }, select: { id: true } })) {

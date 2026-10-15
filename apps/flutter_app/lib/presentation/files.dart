@@ -12,6 +12,7 @@ import 'manual_preview.dart';
 import 'sharing.dart';
 import 'comments.dart';
 import 'revisions.dart';
+import 'approvals.dart';
 
 final uploadFilePickerProvider = Provider<Future<UploadFile?> Function()>(
   (ref) => pickUploadFile,
@@ -517,6 +518,17 @@ class _FilesPanelState extends ConsumerState<FilesPanel> {
           spacing: 8,
           runSpacing: 8,
           children: [
+            if (version != null)
+              OutlinedButton(
+                onPressed: _busy || _loading
+                    ? null
+                    : () => showDialog<void>(
+                        context: context,
+                        builder: (_) =>
+                            ApprovalDialog(versionId: version.id, guest: false),
+                      ),
+                child: const Text('Ver aprovação'),
+              ),
             OutlinedButton(
               onPressed: _busy || _loading
                   ? null

@@ -1,6 +1,6 @@
 # Cofre de Entregáveis — PRD técnico e primeiro marco
 
-Versão 1.13 · 14 de outubro de 2026 · Comentários confirmados manualmente; rodadas de ajustes implementadas para conferência local
+Versão 1.15 · 15 de outubro de 2026 · Beta com quitação manual auditada implementado; Pix automático pendente
 
 ## 1. Objetivo e decisões
 
@@ -124,11 +124,15 @@ Base: /api/v1. JSON usa camelCase, UUID string, datas ISO-8601 UTC, dinheiro int
 | POST /guest/approvals | {versionId,confirmed:true} + Idempotency-Key → aprovação |
 | POST /guest/payments | {invoiceId} + Idempotency-Key → {paymentId,status,pixCopyPaste,qrCode,expiresAt} |
 | GET /guest/payments/:id | → estado confirmado pelo backend |
-| POST /guest/downloads | {assetId} → {url,expiresAt}; revalida todas as condições |
+| POST /guest/assets/:id/download | {} → {url,expiresAt}; revalida todas as condições |
 | POST /projects/:id/manual-settlement | {invoiceId,kind:"EXTERNAL_PAYMENT" ou "WAIVER",reason} → cobrança atualizada |
+| GET /projects/:id/finance | cobrança atual, revisão e histórico manual do workspace |
+
 | POST /integrations/mercadopago/connect | → URL OAuth com state seguro |
 | GET /integrations/mercadopago/callback | valida state e conecta conta |
 | POST /webhooks/mercadopago | valida evento, persiste inbox e agenda reconciliação |
+
+No beta manual implementado, manual-settlement exige também expectedRevision, confirmed true e Idempotency-Key UUID. Kind REVERSAL desfaz somente o registro e restaura o saldo, sem operação bancária. POST /guest/assets/:id/download exige identidade confirmada, versão publicada atual aprovada, cobrança PAID/WAIVED coerente com saldo zero, projeto/acesso ativos e segurança vigente. Regras, limites e validação em docs/quitacao-manual.md. Edição de valores e Pix automático permanecem posteriores.
 
 Idempotency-Key fica vinculada ao ator, operação e hash do payload. Reuso com payload diferente retorna 409. Não considerar ETag multipart como hash criptográfico do arquivo. A lista de partes é validada contra o upload criado pelo servidor.
 
@@ -331,3 +335,4 @@ Prisma, NestJS e plugins Flutter terão versões e sintaxe verificadas na implem
 - 14/10/2026 — v1.11: confirmação de e-mail com código de seis dígitos vinculada ao cliente/sessão, dez minutos, cinco tentativas, resposta genérica, cooldown e cota por projeto. Fila PostgreSQL com cifra autenticada, hash HMAC, leases e retries idempotentes; identidade expira com acesso e é invalidada por mudança de e-mail. Adapter Resend preparado e testes simulados passaram. Conta/remetente de teste Resend configurados localmente; responsável confirmou recebimento real e confirmação do código no portal em 14/10/2026. Domínio próprio para clientes externos permanece pendente. Nenhuma permissão de colaboração/originais habilitada. Guia: docs/identidade-cliente.md.
 - 14/10/2026 — v1.12: comentários por arquivo/versão com identidade confirmada, referências GENERAL/TIME/IMAGE_POINT/PDF_POINT e consulta pelo criador. Backend valida limites e fonte da prévia; tentativa repetida é idempotente por sessão/UUID/payload. Publicação concorrente não permite comentário novo em versão superada; histórico é consultável. Testes automatizados passaram; conferência manual pendente. Rodadas de ajustes, aprovação e pagamento continuam posteriores. Guia: docs/comentarios-arquivos.md.
 - 14/10/2026 — v1.13: comentários confirmados manualmente pelo responsável. Pedidos de ajustes implementados com snapshot dos comentários, contagem de rodadas incluídas e decisão justificada para extras. Idempotência por sessão/chave/payload, fechamento da coleta e transição na publicação preservam histórico. Testes automatizados passaram; rodadas confirmadas manualmente pelo responsável em 14/10/2026. Aprovação e pagamentos continuam posteriores. Guia: docs/rodadas-ajustes.md.
+- 14/10/2026 — v1.14: rodadas confirmadas manualmente e merge do PR #7 concluído. Aprovação explícita da versão pelo cliente identificado implementada com confirmação booleana, sessão/identidade/horário auditados, idempotência e consulta do criador. Nova publicação exige outra aprovação; comentários e pedidos ficam fechados após aprovar. Ajustes pendentes, segurança inválida e versões antigas bloqueiam nova aprovação. Testes automatizados passaram; conferência manual pendente. Cobrança e liberação de originais continuam posteriores. Guia: docs/aprovacao-versoes.md.

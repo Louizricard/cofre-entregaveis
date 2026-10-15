@@ -18,8 +18,9 @@ export class RevisionsService {
   const project = await tx.project.findFirst({ where: { id: projectId, workspaceId } }); if (!project) throw missing();
   const current = await tx.projectVersion.findFirst({ where: { projectId, state: 'PUBLISHED' } });
   const items = await tx.revisionRound.findMany({ where: { projectId, workspaceId }, include: { version: true }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }] });
+  const approved = current ? await tx.approval.count({ where: { versionId: current.id } }) : 0;
   return { items: items.map(view), included: project.includedRevisionRounds, used: items.filter(r => ['OPEN', 'RESOLVED'].includes(r.state)).length,
-   currentVersionId: current?.id ?? null, canRequest: guest && project.status === 'ACTIVE' && !!current && items.length < 100 && !items.some(r => ['OPEN', 'PENDING'].includes(r.state)) };
+   currentVersionId: current?.id ?? null, canRequest: guest && !approved && project.status === 'ACTIVE' && !!current && items.length < 100 && !items.some(r => ['OPEN', 'PENDING'].includes(r.state)) };
  }
  async creator(workspaceId: string, projectId: string) { return serial(this.db, tx => this.list(tx, workspaceId, projectId, false)); }
  async guest(req: GuestRequest) { return serial(this.db, async tx => { const { session } = await this.identity.confirmed(req, tx); return this.list(tx, session.share.workspaceId, session.share.projectId, true); }); }

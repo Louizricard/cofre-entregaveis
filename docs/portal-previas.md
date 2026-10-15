@@ -2,7 +2,7 @@
 
 O criador publica a versão e abre **Compartilhar prévias**. Escolhe validade de 1, 7 ou 30 dias e cria o link. Copie e guarde: o segredo só aparece nessa resposta, não pode ser recuperado na listagem. O backend aceita expiração entre 5 minutos e 30 dias e até dez links ativos por projeto. Revogar um link não altera os outros.
 
-Quem possui o link pode visualizar o projeto, saldo informado, versões publicadas e prévias; não precisa de conta de criador. Rascunhos, e-mail do cliente, dados do workspace, chaves de originais e detalhes de uploads não são retornados. Histórico SUPERSEDED é permitido para consulta. Listas têm paginação; arquivos são limitados aos cem registros da versão. O portal não permite comentários, aprovação, pagamentos ou download dos originais nesta parte.
+Quem possui o link pode visualizar o projeto, saldo informado, versões publicadas e prévias; não precisa de conta de criador. Rascunhos, e-mail do cliente, dados do workspace, chaves de originais e detalhes de uploads não são retornados. Histórico SUPERSEDED é permitido para consulta. Listas têm paginação; arquivos são limitados aos cem registros da versão. Este guia descreve o recorte inicial de prévias. As entregas posteriores adicionaram identidade, comentários, aprovação e solicitação de originais condicionada à [quitação manual auditada](quitacao-manual.md); as prévias continuam sem fallback para original.
 
 ## Token e sessão
 

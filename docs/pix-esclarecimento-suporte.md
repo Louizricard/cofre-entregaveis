@@ -1,0 +1,7 @@
+# Esclarecimento ao suporte — enviado após autorização
+
+Responsável autorizou especificamente este texto. Enviado ao mesmo atendimento Mercado Pago em 15/10/2026 às 12:03 (America/Sao_Paulo); envio confirmado no histórico da conversa.
+
+O atendimento ofereceu abertura de chamado humano; responsável autorizou essa etapa separadamente. Confirmação enviada às 12:06, seguida de resposta afirmando abertura. Número específico será enviado por e-mail segundo o atendimento; nenhum protocolo real foi exibido nesta conversa.
+
+Obrigado. O corpo completo do 422 não foi preservado; não vou inventar código ou mensagem. Há um ponto ainda não conciliado: também testamos Orders com OAuth test_token:true e identidade MLB/test_user confirmada, mas o POST respondeu HTTP 401. A referência oficial de erros Orders diz que invalid_credentials não admite credenciais de teste e orienta usar credenciais de produção de usuários de teste no sandbox. Com OAuth test_token:false e APP_USR da mesma conta de teste, obtivemos 422. Todos os tokens vieram de Authorization Code com PKCE; não usamos credencial própria da aplicação como fallback. Poderia encaminhar para análise técnica humana ou esclarecer especificamente qual perfil OAuth é compatível com Orders para este vendedor de teste? Precisamos resolver essa divergência antes de repetir as mesmas autorizações. Ainda não temos x-request-id ou corpo completo para correlação; temos os horários e HTTP informados.

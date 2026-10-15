@@ -14,3 +14,5 @@ Consulta em 08/10/2026. Foram consultadas as documentações oficiais e os manif
 Atualizações posteriores devem ser deliberadas, regenerar lockfiles e repetir os checks. O comando install não usa tags latest para as dependências da aplicação.
 
 - Fonte adicional: [cupertino_icons 2.0.0](https://pub.dev/packages/cupertino_icons/versions/2.0.0), confirmada no pub.dev e incluída após diagnóstico do compilador.
+
+Cloudflared para o ensaio Pix: Windows amd64 2026.10.0, arquivo oficial com SHA-256 86aee4017b26625cee8484c113558f48effa4cd47f7aa05fcf425604e5d2b23c. Download somente em .tools (ignorado); cliente não faz parte da API nem do build Flutter. Execução limitada ao receptor isolado de desenvolvimento, conforme docs/pix-tunel-desenvolvimento.md.

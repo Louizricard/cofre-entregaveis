@@ -29,7 +29,7 @@ export class IdentityService implements OnModuleInit, OnModuleDestroy {
  }
  async confirmed(req: GuestRequest, tx: Prisma.TransactionClient = this.db) {
   const access = await this.access(req, tx);
-  if (!access.session.verifiedAt || access.session.verifiedEmail !== access.email) throw new ForbiddenException({ code: 'IDENTITY_REQUIRED', message: 'Confirme seu e-mail no portal para acessar os comentários.' });
+  if (!access.session.verifiedAt || access.session.verifiedEmail !== access.email) throw new ForbiddenException({ code: 'IDENTITY_REQUIRED', message: 'Confirme seu e-mail no portal para comentar, pedir ajustes, aprovar ou baixar originais.' });
   return access;
  }
  async status(req: GuestRequest) {
