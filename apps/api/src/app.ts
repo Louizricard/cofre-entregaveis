@@ -18,6 +18,10 @@ import { CommentsController } from './comments.controller.js';
 import { CommentsService } from './comments.service.js';
 import { RevisionsController } from './revisions.controller.js';
 import { RevisionsService } from './revisions.service.js';
+import { ApprovalsController } from './approvals.controller.js';
+import { ApprovalsService } from './approvals.service.js';
+import { FinanceController } from './finance.controller.js';
+import { FinanceService } from './finance.service.js';
 import { IdentityController } from './identity.controller.js';
 import { IdentityService } from './identity.service.js';
 import { MAILER, ResendIdentityMailer, type IdentityMailer } from './identity-mail.js';
@@ -34,12 +38,12 @@ export async function createApp(config: Settings = settings(), options: { databa
  const db = options.database ?? createDatabase(config.databaseUrl);
  @Module({
   imports: [ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }])],
-  controllers: [AuthController, ProjectsController, ClientsController, HealthController, FilesController, SharingController, GuestController, IdentityController, CommentsController, RevisionsController],
+  controllers: [AuthController, ProjectsController, ClientsController, HealthController, FilesController, SharingController, GuestController, IdentityController, CommentsController, RevisionsController, ApprovalsController, FinanceController],
   providers: [{ provide: SETTINGS, useValue: config }, { provide: DATABASE, useValue: db },
    { provide: STORAGE, useValue: options.storage !== undefined ? options.storage : config.storage ? new R2Storage(config.storage) : null },
    { provide: MAILER, useValue: options.mailer !== undefined ? options.mailer : config.email ? new ResendIdentityMailer(config.email.apiKey, config.email.from) : null },
    { provide: MAINTENANCE, useValue: !options.quiet },
-   AuthService, ProjectsService, FilesService, MediaService, SharingService, IdentityService, CommentsService, RevisionsService, SessionGuard, MutationGuard],
+   AuthService, ProjectsService, FilesService, MediaService, SharingService, IdentityService, CommentsService, RevisionsService, ApprovalsService, FinanceService, SessionGuard, MutationGuard],
  })
  class AppModule {}
  const app = await NestFactory.create(AppModule, { logger: false });

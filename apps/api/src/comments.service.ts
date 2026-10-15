@@ -30,7 +30,8 @@ export class CommentsService {
    else if (['video/mp4', 'audio/mpeg', 'audio/wav'].includes(source.mime)) { anchorTypes.push('TIME'); durationMs = job.pages[0].durationMs ?? 0; }
   }
   const closed = await tx.revisionRound.count({ where: { projectId: a.version.projectId, state: { in: ['OPEN', 'PENDING'] } } });
-  return { canComment: !closed && a.version.state === 'PUBLISHED' && a.version.project.status === 'ACTIVE' && cleanScan(a) && cleanScan(source), anchorTypes, pages, durationMs };
+  const approved = await tx.approval.count({ where: { versionId: a.versionId } });
+  return { canComment: !closed && !approved && a.version.state === 'PUBLISHED' && a.version.project.status === 'ACTIVE' && cleanScan(a) && cleanScan(source), anchorTypes, pages, durationMs };
  }
  private async list(tx: Prisma.TransactionClient, a: Awaited<ReturnType<CommentsService['asset']>>, query: ListQuery, guest: boolean) {
   const cursor = query.cursor ? await tx.comment.findFirst({ where: { id: query.cursor, workspaceId: a.workspaceId, assetId: a.id } }) : null;

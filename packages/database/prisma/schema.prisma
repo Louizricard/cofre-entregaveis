@@ -22,6 +22,7 @@ model User {
  sessions Session[]
  publishedVersions ProjectVersion[]
  revisionDecisions RevisionRound[] @relation("RevisionDecision")
+ settlements ManualSettlement[]
 }
 model Workspace {
  id String @id @default(uuid()) @db.Uuid
@@ -65,6 +66,7 @@ model Project {
  shares ShareLink[]
  versions ProjectVersion[]
  rounds RevisionRound[]
+ invoices Invoice[]
  createdAt DateTime @default(now()) @db.Timestamptz(3)
  updatedAt DateTime @updatedAt @db.Timestamptz(3)
  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -101,11 +103,13 @@ model ProjectVersion {
  project Project @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Restrict)
  assets Asset[]
  rounds RevisionRound[]
+ approvals Approval[]
  @@unique([projectId, number])
  @@unique([workspaceId, id])
 }
 model Asset {
  id String @id @default(uuid()) @db.Uuid
+ originalGrants OriginalGrant[]
  workspaceId String @db.Uuid
  versionId String @db.Uuid
  fileName String @db.VarChar(200)
@@ -244,6 +248,7 @@ model ShareLink {
 }
 model GuestSession {
  id String @id @default(uuid()) @db.Uuid
+ originalGrants OriginalGrant[]
  shareId String @db.Uuid
  tokenHash String @unique @db.Char(64)
  expiresAt DateTime @db.Timestamptz(3)
@@ -253,6 +258,8 @@ model GuestSession {
  verifiedEmail String? @db.VarChar(254)
  challenge IdentityChallenge?
  identityRequests IdentityRequest[]
+ approvals Approval[]
+ approvalRequests ApprovalRequest[]
  rounds RevisionRound[]
  comments Comment[]
  share ShareLink @relation(fields: [shareId], references: [id], onDelete: Restrict)
@@ -347,4 +354,93 @@ model RevisionRound {
  decidedBy User? @relation("RevisionDecision", fields: [decidedById], references: [id], onDelete: Restrict)
  @@unique([guestSessionId, requestKey])
  @@index([workspaceId, projectId, createdAt])
+}
+
+model Approval {
+ id String @id @default(uuid()) @db.Uuid
+ workspaceId String @db.Uuid
+ versionId String @unique @db.Uuid
+ guestSessionId String @db.Uuid
+ authorEmail String @db.VarChar(254)
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ version ProjectVersion @relation(fields: [workspaceId, versionId], references: [workspaceId, id], onDelete: Restrict)
+ guest GuestSession @relation(fields: [guestSessionId], references: [id], onDelete: Restrict)
+ requests ApprovalRequest[]
+ @@index([workspaceId, versionId])
+}
+model ApprovalRequest {
+ id String @id @default(uuid()) @db.Uuid
+ guestSessionId String @db.Uuid
+ requestKey String @db.Uuid
+ payloadHash String @db.Char(64)
+ approvalId String @db.Uuid
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ guest GuestSession @relation(fields: [guestSessionId], references: [id], onDelete: Restrict)
+ approval Approval @relation(fields: [approvalId], references: [id], onDelete: Restrict)
+ @@unique([guestSessionId, requestKey])
+ @@index([approvalId])
+}
+
+enum InvoiceState {
+ OPEN
+ PAID
+ WAIVED
+ REVERSED
+}
+enum SettlementKind {
+ EXTERNAL_PAYMENT
+ WAIVER
+ REVERSAL
+}
+model Invoice {
+ id String @id @default(uuid()) @db.Uuid
+ workspaceId String @db.Uuid
+ projectId String @db.Uuid
+ number Int @default(1)
+ amountCents Int
+ currency String @default("BRL") @db.Char(3)
+ state InvoiceState @default(OPEN)
+ revision Int @default(0)
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ updatedAt DateTime @updatedAt @db.Timestamptz(3)
+ project Project @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Restrict)
+ settlements ManualSettlement[]
+ grants OriginalGrant[]
+ @@unique([projectId, number])
+ @@unique([workspaceId, id])
+}
+model ManualSettlement {
+ id String @id @default(uuid()) @db.Uuid
+ workspaceId String @db.Uuid
+ invoiceId String @db.Uuid
+ actorId String @db.Uuid
+ requestKey String @db.Uuid
+ payloadHash String @db.Char(64)
+ kind SettlementKind
+ reason String @db.VarChar(1000)
+ invoiceRevision Int
+ amountCents Int
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ invoice Invoice @relation(fields: [workspaceId, invoiceId], references: [workspaceId, id], onDelete: Restrict)
+ actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+ @@unique([workspaceId, requestKey])
+ @@unique([invoiceId, invoiceRevision])
+ @@index([invoiceId, createdAt, id])
+}
+model OriginalGrant {
+ id String @id @default(uuid()) @db.Uuid
+ workspaceId String @db.Uuid
+ versionId String @db.Uuid
+ assetId String @db.Uuid
+ invoiceId String @db.Uuid
+ guestSessionId String @db.Uuid
+ invoiceRevision Int
+ authorEmail String @db.VarChar(254)
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ expiresAt DateTime @db.Timestamptz(3)
+ asset Asset @relation(fields: [workspaceId, versionId, assetId], references: [workspaceId, versionId, id], onDelete: Restrict)
+ invoice Invoice @relation(fields: [workspaceId, invoiceId], references: [workspaceId, id], onDelete: Restrict)
+ guest GuestSession @relation(fields: [guestSessionId], references: [id], onDelete: Restrict)
+ @@index([guestSessionId, createdAt])
+ @@index([invoiceId, createdAt])
 }

@@ -5,6 +5,7 @@ import '../application/session.dart';
 import '../data/auth_repository.dart';
 import '../generated/api.g.dart';
 import 'files.dart';
+import 'finance.dart';
 
 String failureMessage(Object error) => error is ApiFailure
     ? error.message
@@ -913,6 +914,20 @@ class _ProjectDetailsState extends State<ProjectDetails> {
                   const SizedBox(height: 20),
                   Text('Saldo a receber: ${money(p.balanceCents)}'),
                   Text('Revisões incluídas: ${p.includedRevisionRounds}'),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.receipt_long),
+                    label: const Text('Cobrança / Quitação manual'),
+                    onPressed: _busy || _fileBusy
+                        ? null
+                        : () async {
+                            await showDialog<void>(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (_) => FinanceDialog(projectId: p.id),
+                            );
+                            if (mounted) await _load();
+                          },
+                  ),
                   FilesPanel(
                     projectId: p.id,
                     active: p.status == 'ACTIVE',

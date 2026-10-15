@@ -262,7 +262,7 @@ void main() {
 
   for (final width in [360.0, 768.0, 1440.0]) {
     testWidgets(
-      'portal remove token antes do bootstrap e mostra somente prévias em $width px',
+      'portal remove token antes do bootstrap e mostra prévias e pedido condicionado do original em $width px',
       (tester) async {
         final repo = FakeGuest();
         final container = await portal(tester, repo, width);
@@ -300,9 +300,10 @@ void main() {
         expect(updates.last.toString().contains('A' * 43), isFalse);
         expect(find.text('Projeto compartilhado'), findsOneWidget);
         expect(find.text('Entrega.zip'), findsOneWidget);
-        expect(find.text('Baixar original'), findsNothing);
+        expect(find.text('Baixar original'), findsOneWidget);
         expect(find.text('Publicar versão'), findsNothing);
         expect(find.text('Enviar arquivo'), findsNothing);
+        await tester.ensureVisible(find.text('Ver prévia'));
         await tester.tap(find.text('Ver prévia'));
         await tester.pumpAndSettle();
         expect(repo.statuses, ['v2']);
@@ -332,6 +333,7 @@ void main() {
       expect(repo.tokens, isEmpty);
       expect(find.text('Projeto compartilhado'), findsOneWidget);
       repo.denied = true;
+      await tester.ensureVisible(find.text('Atualizar projeto'));
       await tester.tap(find.text('Atualizar projeto'));
       await tester.pumpAndSettle();
       expect(find.text('Projeto compartilhado'), findsNothing);

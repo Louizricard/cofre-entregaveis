@@ -6,6 +6,10 @@
     "node": ">=24.19.0 <25"
   },
   "scripts": {
+    "pix:preflight": "pnpm build && node apps/api/dist/src/pix-spike-main.js",
+    "pix:spike": "pnpm build && node apps/api/dist/src/pix-order-spike-main.js",
+    "pix:receiver": "pnpm build && node apps/api/dist/src/pix-receiver-main.js",
+    "pix:tunnel": "node scripts/pix-tunnel.mjs",
     "security:update": "pnpm build && node apps/api/dist/src/signatures-main.js",
     "media:worker": "pnpm build && node apps/api/dist/src/media-main.js",
     "storage:check": "pnpm build && node apps/api/dist/src/storage-check.js",

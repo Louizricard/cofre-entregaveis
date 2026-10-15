@@ -8,6 +8,8 @@ import '../generated/api.g.dart';
 import 'preview.dart';
 import 'comments.dart';
 import 'revisions.dart';
+import 'approvals.dart';
+import 'finance.dart';
 import 'guest_identity.dart';
 
 class GuestEntryScreen extends ConsumerStatefulWidget {
@@ -225,6 +227,21 @@ class _GuestPortalScreenState extends ConsumerState<GuestPortalScreen> {
                 ),
                 const SizedBox(height: 16),
                 const GuestIdentityPanel(),
+                const Text(
+                  'Os originais exigem e-mail confirmado, aprovação da versão atual e pagamento ou dispensa registrados pelo criador.',
+                ),
+                OutlinedButton(
+                  onPressed: _busy || _version == null
+                      ? null
+                      : () => showDialog<void>(
+                          context: context,
+                          builder: (_) => ApprovalDialog(
+                            versionId: _version!.id,
+                            guest: true,
+                          ),
+                        ),
+                  child: const Text('Aprovar versão / Ver aprovação'),
+                ),
                 OutlinedButton(
                   onPressed: _busy || _version == null
                       ? null
@@ -317,6 +334,10 @@ class _GuestPortalScreenState extends ConsumerState<GuestPortalScreen> {
                                   ),
                             icon: const Icon(Icons.visibility),
                             label: const Text('Ver prévia'),
+                          ),
+                          GuestOriginalButton(
+                            key: ValueKey('original-${a.id}'),
+                            assetId: a.id,
                           ),
                         ],
                       ),

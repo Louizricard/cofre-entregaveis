@@ -3,7 +3,7 @@ const spec = JSON.parse(readFileSync('packages/contracts/openapi.json', 'utf8'))
 const schemas = spec.components.schemas;
 const refName = s => s.$ref?.split('/').pop();
 function type(s) {
- if (s.allOf?.length === 1) return type(s.allOf[0]);
+ if (s.allOf?.length === 1) return type({ ...s.allOf[0], nullable: s.nullable || s.allOf[0].nullable });
  const ref = refName(s);
  let result;
  if (ref) result = ref;
@@ -24,7 +24,7 @@ function decode(s, value) {
  return value + ' as ' + type(s);
 }
 function encode(s, value) {
- if (s.allOf?.length === 1) return encode(s.allOf[0], value);
+ if (s.allOf?.length === 1) return encode({ ...s.allOf[0], nullable: s.nullable || s.allOf[0].nullable }, value);
  if (refName(s)) return value + (s.nullable ? '?' : '') + '.toJson()';
  if (s.type === 'array') return value + '.map((e) => ' + encode(s.items, 'e') + ').toList()';
  return value;
