@@ -38,4 +38,3 @@ Túnel e receptor encerrados após a prova. Tokens foram descartados conforme es
 # Revisão de permissões (15/10/2026)
 
 O hook de cobrança passou a exigir `read` e `write` na resposta OAuth antes de receber o token. Seleção de scopes no painel e identidade autenticada não substituem essa conferência. Evidência registra somente readScopeGranted/writeScopeGranted, além dos booleanos anteriores; access/refresh token continuam sem persistência. Prova OAuth apenas de identidade pode retornar sem hook, mas falta de scopes bloqueia cobrança conectada com PAYMENT_SCOPES_REQUIRED. Permissões das tentativas antigas não foram preservadas: não inferir que a falta delas causou o HTTP 422. Ver [auditoria técnica](pix-auditoria-tecnica.md).
-
